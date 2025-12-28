@@ -1,0 +1,7 @@
+<h2>Supprimer {{ type }}</h2>
+<p>Voulez-vous vraiment supprimer "{{ object }}" ?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Supprimer</button>
+    <a href="{% url 'gestion_club_event' %}" class="btn btn-secondary">Annuler</a>
+</form>

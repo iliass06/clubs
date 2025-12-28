@@ -1,0 +1,291 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier Club</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+/* ================= GLOBAL ================= */
+body {
+    background-color: #f1f5f9;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #111827;
+}
+
+/* ================= NAVBAR ================= */
+.navbar-custom {
+    background: linear-gradient(90deg, #1e293b, #020617);
+}
+.navbar-custom .navbar-brand {
+    font-weight: 700;
+    color: #facc15 !important;
+}
+.navbar-custom .nav-link {
+    color: #e5e7eb !important;
+}
+.navbar-custom .nav-link:hover {
+    color: #facc15 !important;
+}
+
+/* ================= TITLES ================= */
+h2 {
+    font-weight: 700;
+    color: #020617;
+}
+
+/* ================= CARDS ================= */
+.card {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(2,6,23,0.08);
+}
+.card-header {
+    border-radius: 14px 14px 0 0;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+}
+.bg-primary {
+    background: linear-gradient(90deg, #2563eb, #1d4ed8) !important;
+}
+.bg-secondary {
+    background: linear-gradient(90deg, #475569, #334155) !important;
+}
+
+/* ================= FORMS ================= */
+.card-body p {
+    margin-bottom: 1rem;
+}
+.card-body label {
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 4px;
+}
+input[type="text"],
+input[type="email"],
+textarea,
+select {
+    width: 100%;
+    border-radius: 10px;
+    padding: 10px 12px;
+    border: 1px solid #cbd5f5;
+    background-color: #f8fafc;
+}
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+}
+
+/* ================= TABLE ================= */
+table {
+    border-radius: 12px;
+    overflow: hidden;
+}
+thead th {
+    background-color: #e2e8f0 !important;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: #334155;
+}
+tbody td {
+    background-color: #ffffff;
+}
+tbody tr:hover {
+    background-color: #f1f5f9;
+}
+td input,
+td textarea {
+    background-color: #ffffff;
+}
+
+/* ================= CHECKBOX ================= */
+input[type="checkbox"] {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+/* ================= BUTTONS ================= */
+.btn {
+    border-radius: 10px;
+}
+.btn-outline-primary {
+    border: 2px dashed #2563eb;
+    color: #2563eb;
+    font-weight: 500;
+}
+.btn-outline-primary:hover {
+    background-color: #2563eb;
+    color: #fff;
+}
+.btn-success {
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    border: none;
+}
+.btn-secondary {
+    background-color: #475569;
+    border: none;
+}
+.btn-success:hover,
+.btn-secondary:hover {
+    opacity: 0.9;
+}
+
+/* ================= FOOT ACTIONS ================= */
+.d-flex.gap-2 button,
+.d-flex.gap-2 a {
+    height: 46px;
+    font-size: 1rem;
+}
+</style>
+
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'admin_dashboard' %}">Espace Admin</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAdmin">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarAdmin">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'gestion_club_event' %}">Gestion Club/Evenement</a>
+                    </li>
+                </ul>
+
+                <div class="d-flex align-items-center">
+                    <span class="navbar-text me-3">
+                        {{ user.first_name }} {{ user.last_name }}
+                    </span>
+                    <a href="{% url 'signout' %}" class="btn btn-outline-warning ms-2">
+                        Se déconnecter
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5 mb-5">
+
+        <h2 class="mb-4">Modifier le club : {{ club.nom }}</h2>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- ================= CLUB INFO ================= -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    Informations du club
+                </div>
+                <div class="card-body">
+                    {{ form.as_p }}
+                </div>
+            </div>
+
+            <!-- ================= CELLULES ================= -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    Cellules du club
+                </div>
+                <div class="card-body">
+
+                    {{ formset.management_form }}
+
+                    <table class="table table-bordered" id="cellule-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nom</th>
+                                <th>Description</th>
+                                <th class="text-center">Supprimer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cellule_form in formset %}
+                             {% if cellule_form.instance.pk %}
+                            <tr>
+                                <td>
+                                    {{ cellule_form.id }}
+                                    {{ cellule_form.nom }}
+                                </td>
+                                <td>
+                                    {{ cellule_form.description }}
+                                </td>
+                                <td class="text-center">
+                                    {{ cellule_form.DELETE }}
+                                </td>
+                            </tr>
+                             {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <button type="button" class="btn btn-outline-primary" id="add-cellule">
+                        + Ajouter une cellule
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- ================= ACTIONS ================= -->
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success w-100">
+                    Enregistrer
+                </button>
+                <a href="{% url 'gestion_club_event' %}" class="btn btn-secondary w-100">
+                    Annuler
+                </a>
+            </div>
+
+        </form>
+
+    </div>
+
+    <!-- ================= EMPTY FORM TEMPLATE ================= -->
+    <table class="d-none">
+        <tbody id="empty-form-template">
+            <tr>
+                <td>
+                    {{ formset.empty_form.id }}
+                    {{ formset.empty_form.nom }}
+                </td>
+                <td>
+                    {{ formset.empty_form.description }}
+                </td>
+                <td class="text-center">
+                    {{ formset.empty_form.DELETE }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ================= JAVASCRIPT ================= -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const addBtn = document.getElementById('add-cellule');
+        const tableBody = document.querySelector('#cellule-table tbody');
+        const totalForms = document.querySelector('[name$="-TOTAL_FORMS"]');
+        const emptyFormHtml = document.getElementById('empty-form-template').innerHTML;
+
+        addBtn.addEventListener('click', function () {
+            let index = parseInt(totalForms.value);
+
+            let newRow = emptyFormHtml.replace(/__prefix__/g, index);
+
+            tableBody.insertAdjacentHTML('beforeend', newRow);
+
+            totalForms.value = index + 1;
+        });
+
+    });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

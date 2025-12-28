@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2>🚀 Espace Pilotage <small class="text-muted fs-5">| Chef de Cellule</small></h2>
+            <p class="text-muted mb-0">Gérez vos équipes, suivez l'avancement et communiquez avec vos membres.</p>
+        </div>
+        <span class="badge bg-light text-dark border p-2">
+            📅 {{ user.last_login|default:user.date_joined|date:"l d F Y" }}
+        </span>
+    </div>
+
+    <div class="row">
+        {% for cellule in my_cellules %}
+        <div class="col-12 mb-5">
+            <div class="card shadow-sm border-0 overflow-hidden">
+                
+                <div class="card-header text-white p-4 position-relative {% if cellule.club %}bg-gradient-club{% else %}bg-gradient-event{% endif %}">
+                    
+                    <div class="d-flex justify-content-between align-items-start position-relative" style="z-index: 2;">
+                        <div>
+                            <h2 class="fw-bold mb-1">{{ cellule.nom }}</h2>
+                            {% if cellule.club %}
+                                <span class="badge bg-white text-primary bg-opacity-75">
+                                    <i class="bi bi-building"></i> Club : {{ cellule.club.nom }}
+                                </span>
+                            {% elif cellule.event %}
+                                <span class="badge bg-dark text-warning">
+                                    <i class="bi bi-calendar-event"></i> Event : {{ cellule.event.nom }}
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="text-center bg-white text-dark rounded p-3 shadow-sm">
+                            <h3 class="mb-0 fw-bold">{{ cellule.membres.count }}</h3>
+                            <small class="text-muted text-uppercase" style="font-size: 0.7rem;">Membres</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-lg-8 pe-lg-5">
+                            <h5 class="mb-4 text-secondary border-bottom pb-2">
+                                👥 Mon Équipe
+                            </h5>
+                            
+                            {% if cellule.membres.exists %}
+                                <div class="row g-3">
+                                    {% for membre in cellule.membres.all %}
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center p-3 border rounded bg-white h-100 shadow-sm member-card">
+                                            <img src="https://ui-avatars.com/api/?name={{ membre.first_name }}+{{ membre.last_name }}&background=random&color=fff&size=128" 
+                                                 class="rounded-circle me-3" width="50" height="50" alt="Avatar">
+                                            
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h6 class="mb-0 text-truncate fw-bold">{{ membre.get_full_name }}</h6>
+                                                <small class="text-muted d-block text-truncate">{{ membre.email }}</small>
+                                            </div>
+                                            
+                                            <a href="mailto:{{ membre.email }}" class="btn btn-sm btn-light text-secondary ms-2" title="Envoyer un message">
+                                                📧
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning d-flex align-items-center">
+                                    <span class="fs-4 me-2">⚠️</span>
+                                    <div>
+                                        <strong>C'est calme ici...</strong><br>
+                                        Aucun membre n'a encore rejoint cette cellule.
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-lg-4 mt-4 mt-lg-0 border-start ps-lg-4">
+                            
+                            <h5 class="mb-3 text-secondary">📊 État d'avancement</h5>
+                            <div class="card bg-light border-0 mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small class="fw-bold">Objectifs atteints</small>
+                                        <small class="text-success fw-bold">75%</small>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 75%"></div>
+                                    </div>
+                                    <p class="mt-2 mb-0 small text-muted">
+                                        La cellule est active et performante.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <h5 class="mb-3 text-secondary">⚡ Actions Rapides</h5>
+                            <div class="d-grid gap-2">
+                                <a href="mailto:{% for membre in cellule.membres.all %}{{ membre.email }},{% endfor %}" 
+                                   class="btn btn-primary shadow-sm">
+                                    📢 Email à toute l'équipe
+                                </a>
+                                
+                                <button class="btn btn-outline-dark bg-white">
+                                    📅 Planifier une réunion
+                                </button>
+                                
+                                <button class="btn btn-outline-dark bg-white">
+                                    📝 Voir les tâches
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="text-muted display-1">📭</div>
+            <h3 class="mt-3">Aucune cellule assignée</h3>
+            <p class="text-muted">Vous n'avez pas encore été désigné comme chef d'une cellule active.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    /* Dégradé Bleu pour les Clubs */
+    .bg-gradient-club {
+        background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+    }
+
+    /* Dégradé Orange pour les Events */
+    .bg-gradient-event {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    }
+
+    .member-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .member-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.1) !important;
+        border-color: #0d6efd !important;
+    }
+</style>
+{% endblock %}

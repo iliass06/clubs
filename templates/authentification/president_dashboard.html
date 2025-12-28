@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>👤 Tableau de bord Président</h2>
+            <p class="text-muted">Gérez ici l'ensemble de vos structures et leurs cellules.</p>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="text-primary border-bottom pb-2 mb-3">🏢 Mes Clubs</h3>
+        </div>
+        
+        {% for club in my_clubs %}
+        <div class="col-lg-6 mb-4">
+            <div class="card border-primary h-100 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ club.nom }}</h5>
+                    <small>Club Annuel</small>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Cellules actives :</h6>
+                    {% if club.cellules.all %}
+                        <ul class="list-group list-group-flush">
+                            {% for cellule in club.cellules.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{{ cellule.nom }}</span>
+                                
+                                {% if cellule.chef %}
+                                    <span class="badge bg-secondary">
+                                        Chef : {{ cellule.chef.get_full_name }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-exclamation-triangle"></i> Chef manquant
+                                    </span>
+                                {% endif %}
+                                
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted fst-italic">Aucune cellule créée pour ce club.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-light border">Vous ne présidez aucun club actuellement.</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <h3 class="text-warning border-bottom pb-2 mb-3" style="color: #d39e00 !important;">📅 Mes Événements</h3>
+        </div>
+
+        {% for event in my_events %}
+        <div class="col-lg-6 mb-4">
+            <div class="card border-warning h-100 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">{{ event.nom }}</h5>
+                    <small>Événement Ponctuel</small>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Cellules dédiées :</h6>
+                    {% if event.cellules.all %}
+                        <ul class="list-group list-group-flush">
+                            {% for cellule in event.cellules.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{{ cellule.nom }}</span>
+                                
+                                {% if cellule.chef %}
+                                    <span class="badge bg-secondary">
+                                        Chef : {{ cellule.chef.get_full_name }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-exclamation-triangle"></i> Chef manquant
+                                    </span>
+                                {% endif %}
+
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted fst-italic">Aucune cellule pour cet événement.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-light border">Vous ne présidez aucun événement actuellement.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

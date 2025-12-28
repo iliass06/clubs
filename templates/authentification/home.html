@@ -1,0 +1,492 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="Gestion des clubs ENSA Khouribga" />
+        <meta name="author" content="ENSA Khouribga" />
+        <title>Gestion clubs - ENSA KHOURIBGA</title>
+        <link rel="icon" type="image/x-icon" href="{% static 'assets/favicon.ico' %}" />
+        <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+        <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css" />
+        <link href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700" rel="stylesheet" type="text/css" />
+        <link href="{% static 'css/styles.css' %}" rel="stylesheet" />
+        <style>
+            /* --- Styles généraux --- */
+            .club-img, .event-img {
+                width: 100%;
+                height: 250px;
+                object-fit: cover;
+                background-color: #f0f0f0;
+            }
+            .circle-image img {
+                width: 150px;
+                height: 150px;
+                object-fit: cover;
+                border-radius: 50%;
+                border: 7px solid rgba(0,0,0,0.1);
+            }
+            .custom-alert {
+                font-size: 1rem;
+                font-weight: 500;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+                z-index: 9999;
+            }
+
+            /* --- Styles pour les cellules dans les modales --- */
+            .cellule-item {
+                background-color: #f8f9fa;
+                border-left: 4px solid #ffc800;
+                padding: 15px;
+                margin-bottom: 15px;
+                text-align: left;
+                border-radius: 4px;
+            }
+            .cellule-title {
+                font-weight: bold;
+                color: #212529;
+                text-transform: uppercase;
+                font-size: 1rem;
+                margin-bottom: 5px;
+            }
+            .cellule-desc {
+                font-size: 0.9rem;
+                color: #6c757d;
+                margin-bottom: 0;
+                font-style: italic;
+            }
+
+            /* --- CORRECTION POUR L'EFFET HOVER SUR LES ÉVÉNEMENTS (#services) --- */
+            /* On reproduit le style de #portfolio pour #services */
+            #services .portfolio-item {
+                right: 0;
+                margin: 0 0 15px;
+            }
+            #services .portfolio-item .portfolio-link {
+                position: relative;
+                display: block;
+                max-width: 400px;
+                margin: 0 auto;
+                cursor: pointer;
+            }
+            #services .portfolio-item .portfolio-link .portfolio-hover {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                transition: all ease 0.5s;
+                opacity: 0;
+                background: rgba(255, 200, 0, 0.9); /* Le jaune caractéristique */
+                z-index: 2; /* S'assure qu'il est au-dessus de l'image */
+            }
+            #services .portfolio-item .portfolio-link:hover .portfolio-hover {
+                opacity: 1;
+            }
+            #services .portfolio-item .portfolio-link .portfolio-hover .portfolio-hover-content {
+                font-size: 20px;
+                position: absolute;
+                top: 50%;
+                width: 100%;
+                height: 20px;
+                margin-top: -12px;
+                text-align: center;
+                color: white;
+            }
+            #services .portfolio-item .portfolio-link .portfolio-hover .portfolio-hover-content i {
+                margin-top: -12px;
+            }
+            header.masthead .masthead-subheading {
+                color: black !important;
+            }
+            header.masthead .masthead-heading {
+                color: black !important;
+            }
+        </style>
+    </head>
+    <body id="page-top">
+        
+        <nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav">
+            <div class="container">
+                <a class="navbar-brand" href="#page-top"><img src="{% static 'assets/img/log.png' %}" alt="..." /></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                    Menu
+                    <i class="fas fa-bars ms-1"></i>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarResponsive">
+                    <ul class="navbar-nav text-uppercase ms-auto py-4 py-lg-0 align-items-center">
+                        <li class="nav-item"><a class="nav-link" href="#annonces">Annonces</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#services">Événements</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#portfolio">Clubs</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#team">Equipe</a></li>
+                        {% if user.is_authenticated %}
+                            <li class="nav-item">
+                                {% if user.profil.profil == 'president' %}
+                                    <a class="btn btn-primary btn-sm mx-2" href="{% url 'president_dashboard' %}">Mon Espace</a>
+                                {% elif user.profil.profil == 'chef_cellule' %}
+                                    <a class="btn btn-primary btn-sm mx-2" href="{% url 'chef_dashboard' %}">Mon Espace</a>
+                                {% elif user.profil.profil == 'admin' %}
+                                    <a class="btn btn-primary btn-sm mx-2" href="{% url 'admin_dashboard' %}">Admin</a>
+                                {% else %}
+                                    <a class="btn btn-primary btn-sm mx-2" href="{% url 'membre_dashboard' %}">Mon Espace</a>
+                                {% endif %}
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-danger" href="{% url 'signout' %}">
+                                    <i class="fas fa-power-off"></i>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item"><a class="btn btn-primary btn-sm" href="{% url 'signin' %}">Se connecter</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <header class="masthead">
+            <div class="container">
+                {% if messages %}
+                    <div class="row justify-content-center mb-4">
+                        <div class="col-lg-8">
+                            {% for message in messages %}
+                                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show custom-alert text-start" role="alert">
+                                    <div class="d-flex align-items-center">
+                                        {% if message.tags == 'error' %}
+                                            <i class="fas fa-exclamation-circle fa-2x me-3 text-danger"></i>
+                                        {% elif message.tags == 'warning' %}
+                                            <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
+                                        {% elif message.tags == 'success' %}
+                                            <i class="fas fa-check-circle fa-2x me-3 text-success"></i>
+                                        {% else %}
+                                            <i class="fas fa-info-circle fa-2x me-3 text-info"></i>
+                                        {% endif %}
+                                        
+                                        <div>
+                                            <strong>Note :</strong> {{ message }}
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="masthead-subheading">Salut futur leader !</div>
+                <div class="masthead-heading text-uppercase" style="font-size:2rem;">Explorez, Participez, Innovez</div>
+               
+               {% if user.is_authenticated %}
+                    <a class="btn btn-primary btn-xl text-uppercase" href="#annonces">Voir les offres</a>
+               {% else %}
+                    <a class="btn btn-primary btn-xl text-uppercase" href="{% url 'signin' %}">Se connecter</a>
+               {% endif %}
+            </div>
+        </header>
+
+        <section class="page-section bg-light" id="annonces">
+            <div class="container">
+                <div class="text-center">
+                    <h2 class="section-heading text-uppercase">Annonces en cours</h2>
+                    <h3 class="section-subheading text-muted">
+                        Découvrez les annonces et événements ouverts pour postulation !
+                    </h3>
+                </div>
+
+                <div class="row text-center">
+                    {% for annonce in annonces %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 shadow-sm border-0">
+                            <div class="circle-image mt-4 mx-auto">
+                                <img src="{% static 'assets/img/new.png' %}" class="card-img-top" alt="{{ annonce.titre }}">
+                            </div>
+                                
+                            <span class="badge bg-success position-absolute top-0 start-50 translate-middle shadow-sm">Actif</span>
+
+                            <div class="card-body">
+                                <h4 class="card-title my-3">{{ annonce.titre }}</h4>
+                                
+                                <p class="card-text text-muted small">{{ annonce.description|truncatewords:20 }}</p>
+                                
+                                <div class="badge bg-light text-dark mb-3 border">
+                                    {% if annonce.club %} Club : {{ annonce.club.nom }} {% endif %}
+                                    {% if annonce.event %} Event : {{ annonce.event.titre }} {% endif %}
+                                </div>
+
+                                <p class="card-text text-muted small">
+                                    <i class="fas fa-calendar-alt"></i> Jusqu'au {{ annonce.end_date|date:"d M Y" }}
+                                </p>
+                            </div>
+
+                            <div class="card-footer bg-white border-top-0 pb-4">
+                                <a href="{% url 'postuler' annonce.id %}" class="btn btn-xl w-100 {% if user.is_authenticated %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                    {% if user.is_authenticated %}
+                                        <i class="fas fa-check-circle"></i> Postuler en tant que {{ user.username }}
+                                    {% else %}
+                                        <i class="fas fa-user-plus"></i> Postuler (Créer un compte)
+                                    {% endif %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info">Aucune annonce pour le moment. Revenez plus tard !</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section class="page-section" id="services">
+            <div class="container">
+                <div class="text-center">
+                    <h2 class="section-heading text-uppercase">Événements</h2>
+                    <h3 class="section-subheading text-muted">
+                        Cliquez pour voir les détails des événements à venir.
+                    </h3>
+                </div>
+
+                <div class="row">
+                    {% for event in events %}
+                    <div class="col-lg-4 col-sm-6 mb-4">
+                        <div class="portfolio-item">
+                            <a class="portfolio-link" data-bs-toggle="modal" href="#eventModal{{ event.id }}">
+                                <div class="portfolio-hover">
+                                    <div class="portfolio-hover-content">
+                                        <i class="fas fa-plus fa-3x"></i>
+                                    </div>
+                                </div>
+                                
+                                {% if event.image %}
+                                    <img class="event-img" src="{{ event.image.url }}" alt="{{ event.titre }}">
+                                {% elif event.club and event.club.logo %}
+                                    <img class="event-img" src="{{ event.club.image.url }}" alt="{{ event.titre }}">
+                                {% else %}
+                                    <img class="event-img" src="{% static 'assets/img/logo.png' %}" alt="Event">
+                                {% endif %}
+                            </a>
+                            <div class="portfolio-caption">
+                                <div class="portfolio-caption-heading">{{ event.titre }}</div>
+                                <div class="portfolio-caption-subheading text-muted">
+                                    {{ event.date|date:"d M Y" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center"><p class="text-muted">Aucun événement à venir.</p></div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section class="page-section bg-light" id="portfolio">
+            <div class="container">
+                <div class="text-center">
+                    <h2 class="section-heading text-uppercase">Nos Clubs</h2>
+                    <h3 class="section-subheading text-muted">Découvrez les clubs de l'ENSA Khouribga.</h3>
+                </div>
+                <div class="row">
+                    {% for club in clubs %}
+                    <div class="col-lg-4 col-sm-6 mb-4">
+                        <div class="portfolio-item">
+                            <a class="portfolio-link" data-bs-toggle="modal" href="#clubModal{{ club.id }}">
+                                <div class="portfolio-hover">
+                                    <div class="portfolio-hover-content">
+                                        <i class="fas fa-plus fa-3x"></i>
+                                    </div>
+                                </div>
+                                {% if club.image %}
+                                <img class="club-img" src="{{ club.image.url }}" alt="{{ club.nom }}">
+                                {% else %}
+                                <img class="club-img" src="{% static 'assets/img/logo.png' %}" alt="{{ club.nom }}">
+                                {% endif %}
+                            </a>
+                            <div class="portfolio-caption">
+                                <div class="portfolio-caption-heading">{{ club.nom }}</div>
+                                <div class="portfolio-caption-subheading text-muted">
+                                    {{ club.description|truncatechars:60 }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section class="page-section bg-white" id="team">
+            <div class="container">
+                <div class="text-center">
+                    <h2 class="section-heading text-uppercase">Equipe</h2>
+                    <h3 class="section-subheading text-muted">Créateurs de la plateforme.</h3>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-lg-4">
+                        <div class="team-member">
+                            <img class="mx-auto rounded-circle" src="{% static 'assets/img/IMG_0183.png' %}" alt="..." />
+                            <h4>Achraf El Haouari</h4>
+                            <p class="text-muted">IID 1</p>
+                            <a class="btn btn-dark btn-social mx-2" href="https://www.linkedin.com/in/achraf-el-haouari-08a4a6299/"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="team-member">
+                            <img class="mx-auto rounded-circle" src="{% static 'assets/img/image_iliass.png' %}" alt="..." />
+                            <h4>Iliass El Fadili</h4>
+                            <p class="text-muted">IID 1</p>
+                            <a class="btn btn-dark btn-social mx-2" href="https://www.linkedin.com/in/iliass-el-fadili-a79941382/"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer py-4 bg-light">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-4 text-lg-start">Copyright &copy; ENSAKH 2025</div>
+                    <div class="col-lg-4 my-3 my-lg-0">
+                        <a class="btn btn-dark btn-social mx-2" href="#!"><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-dark btn-social mx-2" href="#!"><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-dark btn-social mx-2" href="#!"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        {% for club in clubs %}
+        <div class="portfolio-modal modal fade" id="clubModal{{ club.id }}" tabindex="-1" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="close-modal" data-bs-dismiss="modal">
+                        <img src="{% static 'assets/img/close-icon.svg' %}" alt="Close modal" />
+                    </div>
+                    <div class="container">
+                        <div class="row justify-content-center">
+                            <div class="col-lg-8">
+                                <div class="modal-body">
+                                    <h2 class="text-uppercase mb-3">{{ club.nom }}</h2>
+                                    
+                                    {% if club.image %}
+                                        <img class="img-fluid d-block mx-auto mb-4" src="{{ club.image.url }}" alt="{{ club.nom }}" style="max-height: 200px;">
+                                    {% else %}
+                                        <img class="img-fluid d-block mx-auto mb-4" src="{% static 'assets/img/logo.png' %}" alt="{{ club.nom }}" style="max-height: 200px;">
+                                    {% endif %}
+                                    
+                                    <p class="item-intro text-muted mb-4">
+                                        {{ club.description|default:"Aucune description fournie." }}
+                                    </p>
+                                    
+                                    <ul class="list-inline mb-4">
+                                        {% if club.coordinateur %}
+                                        <li><strong>Coordinateur(ice) :</strong> {{ club.coordinateur }}</li>
+                                        {% endif %}
+                                        
+                                        <li>
+                                            <strong>Président :</strong> 
+                                            {% if club.president %}
+                                                {{ club.president.first_name }} {{ club.president.last_name }}
+                                            {% else %}
+                                                <span class="text-danger fw-bold">Poste Vacant</span>
+                                            {% endif %}
+                                        </li>
+                                        
+                                        <li><strong>Membres inscrits :</strong> {{ club.membres.count }}</li>
+                                    </ul>
+
+                                    {% if club.cellules.all %}
+                                        <h4 class="text-uppercase my-3">Nos Cellules</h4>
+                                        <div class="row">
+                                            {% for cellule in club.cellules.all %}
+                                            <div class="col-12 cellule-item">
+                                                <div class="cellule-title">{{ cellule.nom }}</div>
+                                                <p class="cellule-desc">{{ cellule.description|default:"Pas de description disponible." }}</p>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+
+                                    <button class="btn btn-primary btn-xl text-uppercase mt-4" data-bs-dismiss="modal" type="button">
+                                        <i class="fas fa-xmark me-1"></i> Fermer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% for event in events %}
+        <div class="portfolio-modal modal fade" id="eventModal{{ event.id }}" tabindex="-1" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="close-modal" data-bs-dismiss="modal">
+                        <img src="{% static 'assets/img/close-icon.svg' %}" alt="Close modal" />
+                    </div>
+                    <div class="container">
+                        <div class="row justify-content-center">
+                            <div class="col-lg-8">
+                                <div class="modal-body">
+                                    <h2 class="text-uppercase mb-3">{{ event.titre }}</h2>
+                                    <p class="item-intro text-muted">
+                                        {% if event.club %}
+                                            Organisé par {{ event.club.nom }}
+                                        {% else %}
+                                            Événement ENSA Khouribga
+                                        {% endif %}
+                                    </p>
+                                    
+                                    {% if event.image %}
+                                        <img class="img-fluid d-block mx-auto mb-4" src="{{ event.image.url }}" alt="{{ event.titre }}" style="max-height: 400px; object-fit: contain;">
+                                    {% elif event.club and event.club.logo %}
+                                        <img class="img-fluid d-block mx-auto mb-4" src="{{ event.club.image.url }}" alt="{{ event.titre }}" style="max-height: 300px;">
+                                    {% else %}
+                                        <img class="img-fluid d-block mx-auto mb-4" src="{% static 'assets/img/logo.png' %}" alt="Event">
+                                    {% endif %}
+
+                                    <p>{{ event.description|linebreaks }}</p>
+                                    
+                                    <ul class="list-inline mb-4">
+                                        <li><strong>Date :</strong> {{ event.date|date:"l d F Y" }}</li>
+                                        <li>
+                                            <strong>Président de l'event :</strong> 
+                                            {% if event.president %}
+                                                {{ event.president.first_name }} {{ event.president.last_name }}
+                                            {% else %}
+                                                <span class="text-danger fw-bold">Non assigné</span>
+                                            {% endif %}
+                                        </li>
+                                        <li><strong>Responsables / Chefs :</strong> {{ event.chefs.count }}</li>
+                                    </ul>
+
+                                    {% if event.cellules.all %}
+                                        <h4 class="text-uppercase my-3">Cellules de l'événement</h4>
+                                        <div class="row">
+                                            {% for cellule in event.cellules.all %}
+                                            <div class="col-12 cellule-item">
+                                                <div class="cellule-title">{{ cellule.nom }}</div>
+                                                <p class="cellule-desc">{{ cellule.description|default:"Pas de description." }}</p>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+
+                                    <button class="btn btn-primary btn-xl text-uppercase mt-4" data-bs-dismiss="modal" type="button">
+                                        <i class="fas fa-xmark me-1"></i> Fermer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="{% static 'js/scripts.js' %}"></script>
+    </body>
+</html>

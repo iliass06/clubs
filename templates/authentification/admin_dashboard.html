@@ -1,0 +1,191 @@
+{% load static %}
+{% if messages %}
+<div class="container mt-3">
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        /* Navbar custom */
+        .navbar-custom {
+            background: linear-gradient(90deg, #1e293b, #020617);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .navbar-custom .navbar-brand {
+            font-weight: 700;
+            color: #ffc800 !important;
+        }
+        .navbar-custom .nav-link {
+            color: #ffffff !important;
+        }
+        .navbar-custom .nav-link.active {
+            font-weight: 600;
+            text-decoration: underline;
+        }
+        .navbar-custom .btn-outline-warning {
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        .navbar-custom .btn-outline-warning:hover {
+            background-color: #ffc800;
+            color: #020617;
+        }
+
+        /* Message "Bonjour ..." */
+        .welcome-text {
+            font-size: 1.7rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        /* Boutons principaux */
+        .main-btns .btn {
+            margin: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            background-color: #ffc800;
+            color: #212529;
+            border: none;
+        }
+        .main-btns .btn:hover {
+            background-color: #e6b800;
+            color: #212529;
+        }
+
+        /* Cards annonces */
+        .circle-image img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin: 0 auto;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            transition: 0.3s;
+        }
+        .section-heading {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        .section-subheading {
+            font-size: 1rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'admin_dashboard' %}">Espace Admin</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAdmin">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarAdmin">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"></li>
+            </ul>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text me-3 text-white">
+                    {{ user.first_name }} {{ user.last_name }}
+                </span>
+                <a href="{% url 'signout' %}" class="btn btn-outline-warning ms-2">
+                    Se déconnecter
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container my-5">
+
+    <p class="text-center welcome-text">Bonjour <strong>{{ user.first_name }} {{ user.last_name }}</strong> </p>
+
+    <div class="text-center main-btns mb-5">
+        <a href="{% url 'create_annonce' %}" class="btn btn-lg">Créer une annonce</a>
+        <a href="{% url 'gestion_club_event' %}" class="btn btn-lg">Gestion Club/Event</a>
+        <a href="{% url 'gestion_utilisateurs' %}" class="btn btn-lg">Gestion Utilisateurs</a>
+    </div>
+
+    <section class="page-section" id="admin-annonces">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2 class="section-heading text-uppercase">Liste des annonces existantes</h2>
+                <h3 class="section-subheading text-muted">Cliquez sur le titre pour voir les candidatures associées</h3>
+            </div>
+
+            <div class="row text-center">
+                {% for annonce in annonces %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm position-relative">
+
+                        <div class="position-absolute top-0 end-0 m-2 d-flex gap-2" style="z-index: 10;">
+                            
+                            <a href="{% url 'modifier_annonce' annonce.id %}" class="btn btn-warning btn-sm text-dark" title="Modifier l'annonce">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+
+                            <form method="post" action="{% url 'delete_annonce' annonce.id %}" class="m-0">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Voulez-vous vraiment supprimer cette annonce ?');" title="Supprimer l'annonce">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="circle-image mt-3">
+                            <img src="{% static 'assets/img/new.png' %}" alt="{{ annonce.titre }}">
+                        </div>
+
+                        <div class="card-body">
+                            <h4 class="card-title my-3">
+                                <a href="{% url 'admin_candidatures' annonce.id %}" class="btn btn-outline-primary w-100">
+                                    {{ annonce.titre }}
+                                </a>
+                            </h4>
+                            <p class="card-text text-muted">{{ annonce.description }}</p>
+                            <p class="card-text text-muted">
+                                <strong>Du :</strong> {{ annonce.start_date }} <br>
+                                <strong>Au :</strong> {{ annonce.end_date }}
+                            </p>
+                            <p class="card-text text-muted">
+                                <strong>Club :</strong> {% if annonce.club %} {{ annonce.club.nom }} {% else %}-{% endif %} <br>
+                                <strong>Event :</strong> {% if annonce.event %} {{ annonce.event.titre }} {% else %}-{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <p class="text-muted">Aucune annonce pour le moment.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

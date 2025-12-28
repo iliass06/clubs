@@ -1,0 +1,18 @@
+<h1>Bienvenue sur la homepage</h1>
+
+
+
+<a href="{% url 'signin' %}">Se connecter</a>
+
+
+
+<h2>Annonces en cours :</h2>
+{% for annonce in annonces %}
+    <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+        <h3><a href="{% url 'postuler' annonce.id %}">{{ annonce.titre }}</a></h3>
+        <p>{{ annonce.description }}</p>
+        <p>Du {{ annonce.start_date }} au {{ annonce.end_date }}</p>
+    </div>
+{% empty %}
+<p>Aucune annonce pour le moment.</p>
+{% endfor %}
