@@ -20,10 +20,6 @@ urlpatterns = [
 
     # Gestion des annonces (Admin)
     path('admin-dashboard/annonce/create/', rec_views.gerer_annonce, name='create_annonce'),
-
-    # =========================================================
-    # ESPACE UTILISATEUR UNIFIÉ
-    # (Remplace les anciens dashboards séparés président/chef)
-    # =========================================================
+    path('quitter/<str:type_objet>/<int:id_objet>/<str:role>/', views.quitter_poste, name='quitter_poste'),
     path('membre/dashboard/', views.membre_dashboard, name='membre_dashboard'),
 ]

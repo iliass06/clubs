@@ -25,17 +25,28 @@
             <div class="row g-3">
                 {% for club in mes_presidences_clubs %}
                 <div class="col-md-6 col-lg-4">
-                    <div class="p-3 border rounded shadow-sm bg-light border-primary border-start-0 border-end-0 border-top-0 border-bottom-4">
+                    <div class="p-3 border rounded shadow-sm bg-light border-primary border-start-0 border-end-0 border-top-0 border-bottom-4 position-relative">
                         <h5 class="fw-bold text-primary">{{ club.nom }}</h5>
-                        <span class="badge bg-primary">Président du Club</span>
+                        <span class="badge bg-primary mb-3">Président du Club</span>
+                        <a href="{% url 'quitter_poste' 'club' club.id 'president' %}" 
+                           class="btn btn-outline-danger btn-sm w-100 mt-2"
+                           onclick="return confirm('⚠️ Êtes-vous sûr de vouloir démissionner de la présidence de ce club ?');">
+                            <i class="fas fa-sign-out-alt me-1"></i> Démissionner
+                        </a>
                     </div>
                 </div>
                 {% endfor %}
+                
                 {% for event in mes_presidences_events %}
                 <div class="col-md-6 col-lg-4">
-                    <div class="p-3 border rounded shadow-sm bg-light border-info border-start-0 border-end-0 border-top-0 border-bottom-4">
+                    <div class="p-3 border rounded shadow-sm bg-light border-info border-start-0 border-end-0 border-top-0 border-bottom-4 position-relative">
                         <h5 class="fw-bold text-info">{{ event.titre }}</h5>
-                        <span class="badge bg-info text-dark">Président de l'Événement</span>
+                        <span class="badge bg-info text-dark mb-3">Président de l'Événement</span>
+                        <a href="{% url 'quitter_poste' 'event' event.id 'president' %}" 
+                           class="btn btn-outline-danger btn-sm w-100 mt-2"
+                           onclick="return confirm('⚠️ Êtes-vous sûr de vouloir démissionner de cet événement ?');">
+                            <i class="fas fa-sign-out-alt me-1"></i> Démissionner
+                        </a>
                     </div>
                 </div>
                 {% endfor %}
@@ -59,7 +70,12 @@
                             {% if cellule.club %}Club : {{ cellule.club.nom }}{% endif %}
                             {% if cellule.event %}Event : {{ cellule.event.titre }}{% endif %}
                         </p>
-                        <span class="badge bg-warning text-dark">Chef de cellule</span>
+                        <span class="badge bg-warning text-dark mb-3">Chef de cellule</span>
+                        <a href="{% url 'quitter_poste' 'cellule' cellule.id 'chef' %}" 
+                           class="btn btn-outline-danger btn-sm w-100 mt-2"
+                           onclick="return confirm('⚠️ Attention : Vous allez quitter votre poste de Chef.');">
+                            <i class="fas fa-sign-out-alt me-1"></i> Démissionner
+                        </a>
                     </div>
                 </div>
                 {% endfor %}
@@ -79,7 +95,12 @@
                 <div class="col-md-6 col-lg-4">
                     <div class="p-3 border rounded shadow-sm border-start border-4 border-success h-100">
                         <h5 class="fw-bold">{{ club.nom }}</h5>
-                        <span class="badge bg-success">Membre Actif</span>
+                        <span class="badge bg-success mb-3">Membre Actif</span>
+                        <a href="{% url 'quitter_poste' 'club' club.id 'membre' %}" 
+                           class="btn btn-outline-danger btn-sm w-100 mt-2"
+                           onclick="return confirm('⛔️ ACTION IRRÉVERSIBLE !\n\nEn quittant ce club, vous perdrez TOUS vos postes associés (Président, Chef, Membre de cellule) au sein de ce club.\n\nÊtes-vous sûr ?');">
+                            <i class="fas fa-door-open me-1"></i> Quitter le Club
+                        </a>
                     </div>
                 </div>
                 {% endfor %}
@@ -92,7 +113,12 @@
                             {% if cellule.club %}Club : {{ cellule.club.nom }}{% endif %}
                             {% if cellule.event %}Event : {{ cellule.event.titre }}{% endif %}
                         </p>
-                        <span class="badge bg-success">Membre de cellule</span>
+                        <span class="badge bg-success mb-3">Membre de cellule</span>
+                        <a href="{% url 'quitter_poste' 'cellule' cellule.id 'membre' %}" 
+                           class="btn btn-outline-danger btn-sm w-100 mt-2"
+                           onclick="return confirm('Voulez-vous quitter cette cellule ?');">
+                            <i class="fas fa-times me-1"></i> Quitter la cellule
+                        </a>
                     </div>
                 </div>
                 {% endfor %}

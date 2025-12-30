@@ -383,3 +383,69 @@ def supprimer_utilisateur(request, user_id):
         user.delete()
         messages.success(request, "Le compte utilisateur a été supprimé définitivement.")
     return redirect('gestion_utilisateurs')
+
+# Ajoute ces imports en haut si ce n'est pas déjà fait
+
+@login_required
+def quitter_poste(request, type_objet, id_objet, role):
+    user = request.user
+    
+    # 1. CAS CLUB
+    if type_objet == 'club':
+        obj = get_object_or_404(Club, id=id_objet)
+        
+        # A. Démissionner de la Présidence
+        if role == 'president':
+            if obj.president == user:
+                obj.president = None
+                obj.save()
+                messages.success(request, f"Vous avez démissionné de la présidence du club {obj.nom}.")
+
+        # B. Quitter le Club (Règle spéciale : Nettoyage complet)
+        elif role == 'membre':
+            # 1. Retirer de la liste des membres du club
+            if user in obj.membres.all():
+                obj.membres.remove(user)
+            
+            # 2. Si l'user était aussi Président -> On le retire
+            if obj.president == user:
+                obj.president = None
+                obj.save()
+            
+            # 3. Retirer de TOUTES les cellules de ce club (Chef ou Membre)
+            cellules_club = Cellule.objects.filter(club=obj)
+            for cell in cellules_club:
+                if cell.chef == user:
+                    cell.chef = None
+                    cell.save()
+                if user in cell.membres.all():
+                    cell.membres.remove(user)
+            
+            messages.success(request, f"Vous avez quitté le club {obj.nom} et tous les postes associés.")
+
+    # 2. CAS EVENT
+    elif type_objet == 'event':
+        obj = get_object_or_404(Event, id=id_objet)
+        
+        if role == 'president':
+            if obj.president == user:
+                obj.president = None
+                obj.save()
+                messages.success(request, f"Vous avez démissionné de l'événement {obj.titre}.")
+
+    # 3. CAS CELLULE
+    elif type_objet == 'cellule':
+        obj = get_object_or_404(Cellule, id=id_objet)
+        
+        if role == 'chef':
+            if obj.chef == user:
+                obj.chef = None
+                obj.save()
+                messages.success(request, f"Vous n'êtes plus chef de la cellule {obj.nom}.")
+        
+        elif role == 'membre':
+            if user in obj.membres.all():
+                obj.membres.remove(user)
+                messages.success(request, f"Vous avez quitté la cellule {obj.nom}.")
+
+    return redirect('membre_dashboard')
