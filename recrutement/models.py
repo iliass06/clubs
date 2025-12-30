@@ -9,6 +9,7 @@ class Annonce(models.Model):
     description = models.TextField(blank=True)
     club = models.ForeignKey(Club, null=True, blank=True, on_delete=models.SET_NULL)
     event = models.ForeignKey(Event, null=True, blank=True, on_delete=models.SET_NULL)
+    # annonce = models.ForeignKey(Club)
     publisher = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='annonces_publishers')
     publisher_type = models.CharField(max_length=20, choices=PUBLISHER_CHOICES, default='admin')
     start_date = models.DateTimeField(default=timezone.now)

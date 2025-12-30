@@ -1,14 +1,18 @@
 # authentification/views.py
 from django.utils import timezone
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 
-from authentification.forms import UserEditForm
-from clubs.models import Club, Event
+# Imports des modèles
+from clubs.models import Club, Event, Cellule
 from .models import Profil
-from recrutement.models import Annonce
+from recrutement.models import Annonce, Candidature
+
+# Imports des formulaires
+from authentification.forms import UserEditForm, SignUpForm
 
 
 # -------------------------
@@ -20,8 +24,8 @@ def home(request):
         end_date__gte=timezone.now()
     )
 
-    events = Event.objects.all().order_by('-date')  # afficher les plus récents d’abord
-    clubs = Club.objects.all().order_by('nom')  # <-- on récupère les clubs
+    events = Event.objects.all().order_by('-date')
+    clubs = Club.objects.all().order_by('nom')
 
     return render(request, 'authentification/home.html', {
         'annonces': annonces,
@@ -31,7 +35,27 @@ def home(request):
 
 
 # -------------------------
-# LOGIN
+# INSCRIPTION (SIGNUP)
+# -------------------------
+def signup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
+            return redirect('home')
+    else:
+        form = SignUpForm()
+
+    return render(request, 'authentification/signup.html', {'form': form})
+
+
+# -------------------------
+# CONNEXION (SIGNIN)
 # -------------------------
 def signin(request):
     if request.user.is_authenticated:
@@ -47,29 +71,21 @@ def signin(request):
             messages.error(request, 'Identifiants incorrects')
             return redirect('signin')
 
-        # Login OK
         login(request, user)
+        
+        # 1. Gestion ADMIN (Reste séparé)
+        try:
+            profil = Profil.objects.get(user=user)
+            if profil.profil == 'admin' or user.is_superuser:
+                return redirect('admin_dashboard')
+        except Profil.DoesNotExist:
+            pass
 
-        # Vérifier que le profil existe
-        profil, created = Profil.objects.get_or_create(user=user)
-
-        # Redirections selon rôle
-        if profil.profil == 'admin':
-            return redirect('admin_dashboard')
-
-        elif profil.profil == 'president':
-            return redirect('president_dashboard')
-
-        elif profil.profil == 'chef_cellule':
-            return redirect('chef_dashboard')
-
-        elif profil.profil == 'membre':
-            return redirect('membre_dashboard')
-
-        return redirect('home')
+        # 2. TOUS LES AUTRES -> Espace Utilisateur Unifié
+        # Peu importe s'il est président, chef ou membre, il va au même endroit.
+        return redirect('membre_dashboard')
 
     return render(request, 'authentification/signin.html')
-
 
 # -------------------------
 # LOGOUT
@@ -89,101 +105,99 @@ def admin_dashboard(request):
     return render(request, 'authentification/admin_dashboard.html', {'annonces': annonces})
 
 
-# # -------------------------
-# # ESPACE PRESIDENT
-# # -------------------------
-# @login_required
-# def president_dashboard(request):
-#     return render(request, 'authentification/president_dashboard.html')
-
-
-# # -------------------------
-# # ESPACE CHEF DE CELLULE
-# # -------------------------
-# @login_required
-# def chef_dashboard(request):
-#     return render(request, 'authentification/chef_dashboard.html')
-
-
-# # -------------------------
-# # ESPACE MEMBRE
-# # -------------------------
-# @login_required
-# def membre_dashboard(request):
-#     return render(request, 'authentification/membre_dashboard.html')
-
-
 # -------------------------
 # ESPACE PRESIDENT
-# -------------------------
-@login_required
-def president_dashboard(request):
-    user = request.user
-    
-    # 1. Récupérer les CLUBS présidés par cet utilisateur
-    # On précharge les cellules liées pour optimiser l'affichage
-    my_clubs = user.preside_clubs.prefetch_related('cellules').all()
-    
-    # 2. Récupérer les ÉVÉNEMENTS (indépendants) présidés par cet utilisateur
-    my_events = user.events_president.prefetch_related('cellules').all()
-
-    context = {
-        'my_clubs': my_clubs,
-        'my_events': my_events,
-    }
-    return render(request, 'authentification/president_dashboard.html', context)
-
-
-# -------------------------
-# ESPACE CHEF DE CELLULE
-# -------------------------
-@login_required
-def chef_dashboard(request):
-    user = request.user
-
-    # Le chef gère des CELLULES.
-    # Ces cellules peuvent appartenir à un Club OU à un Event.
-    # On utilise select_related pour le club/event (parents) et prefetch_related pour les membres (enfants)
-    my_cellules = user.chef_cellules.select_related('club', 'event').prefetch_related('membres').all()
-
-    context = {
-        'my_cellules': my_cellules
-    }
-    return render(request, 'authentification/chef_dashboard.html', context)
-
-
-# -------------------------
-# ESPACE MEMBRE
 # -------------------------
 @login_required
 def membre_dashboard(request):
     user = request.user
 
-    # Le membre appartient à des CELLULES.
-    # On veut voir le nom de la cellule, le club/event associé et qui est le chef.
-    my_participations = user.membres_cellule.select_related('club', 'event', 'chef').all()
+    # --- PARTIE 1 : RÉCUPÉRATION DE TOUS LES RÔLES POSSIBLES ---
     
-    # Optionnel : récupérer les annonces récentes si tu veux les afficher au membre
-    recent_annonces = Annonce.objects.filter(
-        start_date__lte=timezone.now(),
-        end_date__gte=timezone.now()
-    ).order_by('-created_at')[:5]
+    # Présidences
+    mes_presidences_clubs = user.preside_clubs.all()
+    mes_presidences_events = user.events_president.all()
+    
+    # Responsabilités (Chefs)
+    mes_cellules_chef = user.chef_cellules.select_related('club', 'event').all()
+    
+    # Adhésions simples (Membres)
+    mes_cellules_membre = user.membres_cellule.select_related('club', 'event').all()
+    mes_clubs_membre = user.membres_club.all()
+
+
+    # --- PARTIE 2 : HISTORIQUE AVEC LOGIQUE "ACTIF/RETIRÉ" ---
+    # On trie du plus récent au plus ancien pour appliquer la logique "Premier arrivé = Actif"
+    candidatures_qs = Candidature.objects.filter(username=user.username).select_related('annonce', 'club', 'event', 'cellule').order_by('-created_at')
+    
+    my_candidatures = []
+    mandats_actifs_attribues = set() # Mémoire pour éviter les doublons actifs
+
+    for cand in candidatures_qs:
+        cand.etat_actuel = "-" 
+
+        if cand.status == 'acceptee':
+            
+            # A. Identifier le contexte unique (Club X ou Event Y)
+            contexte_key = "inconnu"
+            if cand.club: contexte_key = f"club_{cand.club.id}"
+            elif cand.event: contexte_key = f"event_{cand.event.id}"
+            if cand.cellule: contexte_key += f"_cell_{cand.cellule.id}"
+
+            # B. Nettoyer le profil (gestion des vides/espaces)
+            raw_profil = str(cand.profil_souhaite).lower().strip()
+            if not raw_profil or raw_profil == 'none': raw_profil = 'membre'
+
+            # C. Déterminer le rôle théorique et vérifier la présence réelle en base
+            role_key = "membre"
+            est_present_db = False
+
+            if 'president' in raw_profil:
+                role_key = "president"
+                if (cand.club and cand.club.president == user) or (cand.event and cand.event.president == user):
+                    est_present_db = True
+            elif 'chef' in raw_profil:
+                role_key = "chef"
+                if cand.cellule and cand.cellule.chef == user:
+                    est_present_db = True
+            else:
+                role_key = "membre"
+                if cand.club and user in cand.club.membres.all():
+                    est_present_db = True
+                elif cand.cellule and user in cand.cellule.membres.all():
+                    est_present_db = True
+
+            # D. Verdict final
+            signature = f"{contexte_key}_{role_key}"
+
+            if est_present_db:
+                # Si l'user est physiquement dans le club
+                if signature not in mandats_actifs_attribues:
+                    # C'est la candidature la plus récente pour ce poste -> ACTIF
+                    cand.etat_actuel = "Actif"
+                    mandats_actifs_attribues.add(signature)
+                else:
+                    # On a déjà marqué ce poste comme actif plus haut (donc plus récent) -> RETIRÉ
+                    cand.etat_actuel = "Retiré"
+            else:
+                # L'user n'est plus dans la base -> RETIRÉ
+                cand.etat_actuel = "Retiré"
+
+        my_candidatures.append(cand)
 
     context = {
-        'my_participations': my_participations,
-        'recent_annonces': recent_annonces
+        'mes_presidences_clubs': mes_presidences_clubs,
+        'mes_presidences_events': mes_presidences_events,
+        'mes_cellules_chef': mes_cellules_chef,
+        'mes_cellules_membre': mes_cellules_membre,
+        'mes_clubs_membre': mes_clubs_membre,
+        'my_candidatures': my_candidatures
     }
     return render(request, 'authentification/membre_dashboard.html', context)
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.models import User
-
-from .models import Profil
-from clubs.models import Cellule
-
-
+# -------------------------
+# GESTION UTILISATEURS (ADMIN)
+# -------------------------
 @login_required
 def gestion_utilisateurs(request):
 
@@ -196,43 +210,75 @@ def gestion_utilisateurs(request):
         for profil in profils:
             user = profil.user
 
-            # ==== PRESIDENTS ====
+            # =================================================
+            # 1. LOGIQUE POUR LES PRÉSIDENTS
+            # =================================================
             if role == 'president':
+                # On récupère les clubs et events présidés
                 clubs = user.preside_clubs.all()
                 events = user.events_president.all()
+                
+                # Remplissage Clubs
+                for club in clubs:
+                    if club not in data["clubs"]: data["clubs"][club] = []
+                    # Info inutile pour président, on met vide
+                    data["clubs"][club].append({'user': user, 'info': ''})
 
-            # ==== CHEFS ====
+                # Remplissage Events sans club
+                for event in events:
+                    if not event.club:
+                        if event not in data["events_sans_club"]: data["events_sans_club"][event] = []
+                        data["events_sans_club"][event].append({'user': user, 'info': ''})
+
+            # =================================================
+            # 2. LOGIQUE POUR LES CHEFS DE CELLULE
+            # =================================================
             elif role == 'chef_cellule':
-                cellules = user.chef_cellules.all()
-                clubs = [c.club for c in cellules if c.club]
-                events = [c.event for c in cellules if c.event]
+                cellules = user.chef_cellules.select_related('club', 'event').all()
+                
+                for cell in cellules:
+                    # Gestion Clubs
+                    if cell.club:
+                        if cell.club not in data["clubs"]: data["clubs"][cell.club] = []
+                        # Info = Nom de la cellule dirigée
+                        data["clubs"][cell.club].append({'user': user, 'info': cell.nom})
+                    
+                    # Gestion Events sans club
+                    elif cell.event and not cell.event.club:
+                        evt = cell.event
+                        if evt not in data["events_sans_club"]: data["events_sans_club"][evt] = []
+                        data["events_sans_club"][evt].append({'user': user, 'info': cell.nom})
 
-            # ==== MEMBRES ====
+            # =================================================
+            # 3. LOGIQUE POUR LES MEMBRES (Celle qui t'intéresse)
+            # =================================================
             else:
-                cellules = user.membres_cellule.all()
-                clubs = [c.club for c in cellules if c.club]
-                events = [c.event for c in cellules if c.event]
+                # On prend TOUS les clubs où il est membre (même sans cellule)
+                clubs = user.membres_club.all()
+                
+                for club in clubs:
+                    # On cherche s'il appartient à une cellule DANS CE CLUB
+                    # On filtre les cellules du user qui appartiennent à ce club
+                    user_cells_in_club = user.membres_cellule.filter(club=club)
+                    
+                    if user_cells_in_club.exists():
+                        # S'il a des cellules, on les liste (ex: "Sponsoring, Media")
+                        info_cellule = ", ".join([c.nom for c in user_cells_in_club])
+                    else:
+                        # S'il n'a pas de cellule, on affiche le tiret "-"
+                        info_cellule = "-"
+                    
+                    if club not in data["clubs"]: data["clubs"][club] = []
+                    data["clubs"][club].append({'user': user, 'info': info_cellule})
 
-            # ---- CLUBS ----
-            for club in set(clubs):
-                if club not in data["clubs"]:
-                    data["clubs"][club] = []
-
-                data["clubs"][club].append(user)
-
-            # ---- EVENTS ----
-            for event in set(events):
-                if event.club:
-                    # event lié à un club → reste dans le club
-                    if event.club not in data["clubs"]:
-                        data["clubs"][event.club] = []
-                    if user not in data["clubs"][event.club]:
-                        data["clubs"][event.club].append(user)
-                else:
-                    # event sans club
-                    if event not in data["events_sans_club"]:
-                        data["events_sans_club"][event] = []
-                    data["events_sans_club"][event].append(user)
+                # Idem pour les events sans club
+                events = [c.event for c in user.membres_cellule.all() if c.event and not c.event.club]
+                for evt in set(events):
+                     if evt not in data["events_sans_club"]: data["events_sans_club"][evt] = []
+                     # Pour les events, il est forcément dans une cellule s'il est membre_cellule
+                     user_cells_in_event = user.membres_cellule.filter(event=evt)
+                     info = ", ".join([c.nom for c in user_cells_in_event])
+                     data["events_sans_club"][evt].append({'user': user, 'info': info})
 
         return data
 
@@ -248,43 +294,64 @@ def gestion_utilisateurs(request):
 
     return render(request, 'authentification/gestion_utilisateurs.html', context)
 
+# -------------------------
+# DESACTIVER UTILISATEUR (RETIRER LES DROITS) - MODIFIÉ
+# -------------------------
 @login_required
-def desactiver_utilisateur(request, user_id):
+def desactiver_utilisateur(request, user_id, action):
     user = get_object_or_404(User, id=user_id)
 
     if user.is_superuser:
         messages.error(request, "Impossible de modifier un super administrateur.")
         return redirect('gestion_utilisateurs')
 
-    # Inversion du statut (Actif <-> Inactif)
-    user.is_active = not user.is_active
-    user.save()
+    # --- 1. ACTION : RÉTROGRADER (Pour Présidents / Chefs) ---
+    if action == 'retrograder':
+        Club.objects.filter(president=user).update(president=None)
+        Event.objects.filter(president=user).update(president=None)
+        Cellule.objects.filter(chef=user).update(chef=None)
+        for evt in Event.objects.filter(chefs=user):
+            evt.chefs.remove(user)
 
-    if user.is_active:
-        messages.success(request, f"{user.get_full_name()} a été réactivé.")
-    else:
-        # === C'EST ICI QUE TU AJOUTES LA LOGIQUE DE NETTOYAGE ===
-        
-        # 1. S'il était PRÉSIDENT de clubs, on libère le poste
-        # (update met le champ à NULL pour tous les clubs concernés)
-        clubs_presides = Club.objects.filter(president=user)
-        count_clubs = clubs_presides.count()
-        clubs_presides.update(president=None)
+        try:
+            profil = Profil.objects.get(user=user)
+            profil.profil = 'membre'
+            profil.save()
+        except Profil.DoesNotExist:
+            pass
+            
+        messages.warning(request, f"{user.get_full_name()} n'est plus Responsable, mais il reste Membre du club.")
 
-        # 2. S'il était CHEF de cellules, on libère le poste
-        cellules_dirigees = Cellule.objects.filter(chef=user)
-        count_cellules = cellules_dirigees.count()
-        cellules_dirigees.update(chef=None)
+    # --- 2. ACTION : EXCLURE (Pour Membres) ---
+    elif action == 'exclure':
+        # Nettoyage responsabilités
+        Club.objects.filter(president=user).update(president=None)
+        Event.objects.filter(president=user).update(president=None)
+        Cellule.objects.filter(chef=user).update(chef=None)
+        for evt in Event.objects.filter(chefs=user):
+            evt.chefs.remove(user)
 
-        # On adapte le message pour confirmer que le poste est libre
-        msg_detail = ""
-        if count_clubs > 0 or count_cellules > 0:
-            msg_detail = f" Il a été retiré de {count_clubs} club(s) et {count_cellules} cellule(s)."
-        
-        messages.warning(request, f"{user.get_full_name()} a été désactivé.{msg_detail}")
+        # Nettoyage adhésions
+        for club in Club.objects.filter(membres=user):
+            club.membres.remove(user)
+        for cellule in Cellule.objects.filter(membres=user):
+            cellule.membres.remove(user)
+            
+        try:
+            profil = Profil.objects.get(user=user)
+            profil.profil = 'membre'
+            profil.save()
+        except Profil.DoesNotExist:
+            pass
+
+        # === CORRECTION ICI : messages.error au lieu de messages.danger ===
+        messages.error(request, f"{user.get_full_name()} a été retiré totalement du club (Responsabilités et Adhésion).")
 
     return redirect('gestion_utilisateurs')
 
+# -------------------------
+# MODIFIER UTILISATEUR
+# -------------------------
 @login_required
 def modifier_utilisateur(request, user_id):
     user = get_object_or_404(User, id=user_id)
@@ -303,10 +370,16 @@ def modifier_utilisateur(request, user_id):
         'user_modif': user
     })
 
+
+# -------------------------
+# SUPPRIMER UTILISATEUR (SUPPRESSION DEFINITIVE DU COMPTE)
+# -------------------------
 @login_required
 def supprimer_utilisateur(request, user_id):
     user = get_object_or_404(User, id=user_id)
     if not user.is_superuser: # Sécurité
+        # user.delete() supprime l'enregistrement de la base de données auth_user.
+        # Cela supprime le compte définitivement et cascade sur le Profil.
         user.delete()
-        messages.success(request, "Utilisateur supprimé définitivement.")
+        messages.success(request, "Le compte utilisateur a été supprimé définitivement.")
     return redirect('gestion_utilisateurs')

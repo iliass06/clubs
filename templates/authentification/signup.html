@@ -1,0 +1,194 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Créer un compte - Club ENSA</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  
+  <style>
+    body {
+        background: #E9EAEC;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem 0;
+    }
+
+    .card {
+        background-color: rgba(255, 255, 255, 0.98);
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        max-width: 800px;
+        width: 100%;
+        border-top: 5px solid #FFC800;
+    }
+
+    h3 {
+        color: #212529;
+        font-weight: 700;
+    }
+
+    .section-title {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        color: #6c757d;
+        font-weight: bold;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+        margin-top: 10px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .btn-custom {
+        background-color: #FFC800;
+        color: #212529;
+        font-weight: bold;
+        border: none;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-custom:hover {
+        background-color: #e6b700;
+        transform: translateY(-2px);
+    }
+    
+    .helptext {
+        font-size: 0.75rem;
+        color: #999;
+        display: block;
+        margin-top: 2px;
+    }
+    
+    .helptext ul {
+        margin: 0;
+        padding-left: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card mx-auto">
+        <div class="card-body p-4 p-md-5">
+
+            <div class="text-center mb-4">
+                <h3>Créer un compte</h3>
+                <p class="text-muted small">Rejoignez la communauté de l'ENSA Khouribga</p>
+            </div>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="section-title"><i class="fas fa-user-tag me-2"></i>Informations Personnelles</div>
+                
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">{{ form.first_name.label }} <span class="text-danger">*</span></label>
+                        {{ form.first_name }}
+                        <div class="text-danger small">{{ form.first_name.errors }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ form.last_name.label }} <span class="text-danger">*</span></label>
+                        {{ form.last_name }}
+                        <div class="text-danger small">{{ form.last_name.errors }}</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ form.email.label }} <span class="text-danger">*</span></label>
+                    {{ form.email }}
+                    <div class="text-danger small">{{ form.email.errors }}</div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">{{ form.cne.label }} <span class="text-danger">*</span></label>
+                        {{ form.cne }}
+                        <div class="text-danger small">{{ form.cne.errors }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ form.filiere.label }} <span class="text-danger">*</span></label>
+                        {{ form.filiere }}
+                        <div class="text-danger small">{{ form.filiere.errors }}</div>
+                    </div>
+                </div>
+
+                <div class="section-title"><i class="fas fa-id-card me-2"></i>Compte Utilisateur</div>
+                
+                <div class="mb-4">
+                    <label class="form-label">{{ form.username.label }} <span class="text-danger">*</span></label>
+                    {{ form.username }}
+                    <div class="form-text text-muted small">Ce nom sera utilisé pour vous connecter.</div>
+                    <div class="text-danger small">{{ form.username.errors }}</div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    {% for field in form %}
+                        {% if field.name not in "first_name last_name email cne filiere username" %}
+                            <div class="col-12">
+                                <label class="form-label">{{ field.label }} <span class="text-danger">*</span></label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <small class="helptext">{{ field.help_text|safe }}</small>
+                                {% endif %}
+                                <div class="text-danger small">{{ field.errors }}</div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-custom btn-lg shadow-sm">
+                        <i class="fas fa-check-circle me-2"></i>S'inscrire
+                    </button>
+                </div>
+
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <p class="mb-2">Vous avez déjà un compte ?</p>
+                    <a href="{% url 'signin' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}" class="fw-bold text-decoration-none text-primary">
+                        Se connecter
+                    </a>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="{% url 'home' %}" class="text-decoration-none text-muted small">
+                        <i class="fas fa-arrow-left"></i> Retour à l'accueil
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('input, select').forEach(field => {
+        if (field.type !== 'checkbox' && field.type !== 'radio' && field.type !== 'submit') {
+            field.classList.add('form-control');
+        }
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

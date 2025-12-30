@@ -59,7 +59,6 @@
             }
 
             /* --- CORRECTION POUR L'EFFET HOVER SUR LES ÉVÉNEMENTS (#services) --- */
-            /* On reproduit le style de #portfolio pour #services */
             #services .portfolio-item {
                 right: 0;
                 margin: 0 0 15px;
@@ -77,8 +76,8 @@
                 height: 100%;
                 transition: all ease 0.5s;
                 opacity: 0;
-                background: rgba(255, 200, 0, 0.9); /* Le jaune caractéristique */
-                z-index: 2; /* S'assure qu'il est au-dessus de l'image */
+                background: rgba(255, 200, 0, 0.9);
+                z-index: 2;
             }
             #services .portfolio-item .portfolio-link:hover .portfolio-hover {
                 opacity: 1;
@@ -119,13 +118,10 @@
                         <li class="nav-item"><a class="nav-link" href="#services">Événements</a></li>
                         <li class="nav-item"><a class="nav-link" href="#portfolio">Clubs</a></li>
                         <li class="nav-item"><a class="nav-link" href="#team">Equipe</a></li>
+                        
                         {% if user.is_authenticated %}
                             <li class="nav-item">
-                                {% if user.profil.profil == 'president' %}
-                                    <a class="btn btn-primary btn-sm mx-2" href="{% url 'president_dashboard' %}">Mon Espace</a>
-                                {% elif user.profil.profil == 'chef_cellule' %}
-                                    <a class="btn btn-primary btn-sm mx-2" href="{% url 'chef_dashboard' %}">Mon Espace</a>
-                                {% elif user.profil.profil == 'admin' %}
+                                {% if user.profil.profil == 'admin' %}
                                     <a class="btn btn-primary btn-sm mx-2" href="{% url 'admin_dashboard' %}">Admin</a>
                                 {% else %}
                                     <a class="btn btn-primary btn-sm mx-2" href="{% url 'membre_dashboard' %}">Mon Espace</a>

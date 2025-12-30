@@ -7,15 +7,16 @@
     <title>Club Management</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}"> 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 sticky-top shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{% url 'home' %}">
-                <i class="bi bi-rocket-takeoff"></i> Club ENSA
+            <a class="navbar-brand fw-bold text-warning" href="{% url 'home' %}">
+                <i class="bi bi-rocket-takeoff me-2"></i>Club ENSA
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,32 +30,39 @@
                     </li>
 
                     {% if user.is_authenticated %}
+                        
                         <li class="nav-item">
                             {% if user.profil.profil == 'admin' %}
-                                <a class="nav-link" href="{% url 'admin_dashboard' %}">Administration</a>
-                            {% elif user.profil.profil == 'president' %}
-                                <a class="nav-link" href="{% url 'president_dashboard' %}">Espace Président</a>
-                            {% elif user.profil.profil == 'chef_cellule' %}
-                                <a class="nav-link" href="{% url 'chef_dashboard' %}">Espace Chef</a>
-                            {% elif user.profil.profil == 'membre' %}
-                                <a class="nav-link" href="{% url 'membre_dashboard' %}">Espace Membre</a>
+                                <a class="nav-link fw-bold text-info" href="{% url 'admin_dashboard' %}">
+                                    <i class="bi bi-gear-fill me-1"></i> Administration
+                                </a>
+                            {% else %}
+                                <a class="nav-link fw-bold text-warning" href="{% url 'membre_dashboard' %}">
+                                    <i class="bi bi-person-circle me-1"></i> Espace Utilisateur
+                                </a>
                             {% endif %}
                         </li>
+
                     {% endif %}
                 </ul>
 
                 <div class="d-flex align-items-center">
                     {% if user.is_authenticated %}
                         <div class="text-white me-3 d-none d-lg-block">
-                            <small>Bonjour,</small> <strong>{{ user.username }}</strong>
+                            <small class="text-muted">Bonjour,</small> <strong>{{ user.username }}</strong>
                         </div>
                         <a href="{% url 'signout' %}" class="btn btn-outline-danger btn-sm">
                             <i class="bi bi-box-arrow-right"></i> Se déconnecter
                         </a>
                     {% else %}
-                        <a href="{% url 'signin' %}" class="btn btn-primary btn-sm px-4">
-                            Se connecter
-                        </a>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'signin' %}" class="btn btn-outline-light btn-sm px-3">
+                                Se connecter
+                            </a>
+                            <a href="{% url 'signup' %}" class="btn btn-warning btn-sm px-3 fw-bold">
+                                S'inscrire
+                            </a>
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -75,9 +83,11 @@
         {% endblock %}
     </div>
 
-    <footer class="bg-light text-center text-lg-start mt-5 py-3 border-top">
-        <div class="text-center text-muted">
-            © 2025 Club ENSA Management
+    <footer class="bg-light text-center text-lg-start mt-5 py-4 border-top">
+        <div class="container">
+            <div class="text-center text-muted">
+                <p class="mb-0">© 2025 Club ENSA Management. Tous droits réservés.</p>
+            </div>
         </div>
     </footer>
 

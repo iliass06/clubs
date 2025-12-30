@@ -155,12 +155,13 @@
             <h5 class="mb-3 pb-2 border-bottom text-muted"><i class="fas fa-briefcase me-2"></i>Poste et Motivation</h5>
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">{{ form.profil_souhaite.label }} <span class="text-danger">*</span></label>
+                    <label class="form-label">{{ form.profil_souhaite.label }}</label>
                     {{ form.profil_souhaite }}
                     {{ form.profil_souhaite.errors }}
                 </div>
+                
                 <div class="col-md-6">
-                    <label class="form-label">{{ form.cellule.label }}</label>
+                    <label class="form-label">{{ form.cellule.label }} <span class="text-danger">*</span></label>
                     {{ form.cellule }}
                     {{ form.cellule.errors }}
                     <div class="form-text small text-muted">Requis si vous choisissez Chef de cellule ou Membre.</div>

@@ -7,116 +7,18 @@
 <title>Créer une annonce</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-    body { 
-        background-color: #f8f9fa; 
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    /* Navbar */
-    .navbar-custom {
-        background: linear-gradient(90deg, #1e293b, #020617);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .navbar-custom .navbar-brand {
-        font-weight: 700;
-        color: #ffc800 !important;
-    }
-    .navbar-custom .nav-link {
-        color: #ffffff !important;
-    }
-    .navbar-custom .nav-link.active {
-        font-weight: 600;
-        text-decoration: underline;
-    }
-    .navbar-custom .btn-outline-warning {
-        border-radius: 10px;
-        font-weight: 500;
-    }
-    .navbar-custom .btn-outline-warning:hover {
-        background-color: #ffc800;
-        color: #020617;
-    }
-
-    /* Espace entre navbar et form */
-    .form-container {
-        max-width: 900px;
-        margin: 4rem auto 3rem auto;
-        padding: 2.5rem;
-        background-color: #fff;
-        border-radius: 1.25rem;
-        box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.2);
-        transition: transform 0.2s;
-    }
-    .form-container:hover {
-        transform: translateY(-3px);
-    }
-
-    h2 {
-        text-align: center;
-        margin-bottom: 2rem;
-        font-weight: 700;
-        color: #212529;
-    }
-
-    /* Champs du formulaire */
-    input, select, textarea {
-        width: 100%;
-        padding: 0.65rem 0.85rem;
-        border-radius: 0.5rem;
-        border: 1px solid #ced4da;
-        margin-top: 0.25rem;
-        margin-bottom: 1rem;
-        transition: 0.3s;
-    }
-    input:focus, select:focus, textarea:focus {
-        outline: none;
-        border-color: #ffc800;
-        box-shadow: 0 0 0 0.25rem rgba(255,200,0,0.25);
-    }
-    
-    /* Style pour les champs désactivés */
-    select:disabled {
-        background-color: #e9ecef;
-        cursor: not-allowed;
-        opacity: 0.6;
-    }
-
-    /* Bouton Publier */
-    .btn-publish {
-        background-color: #ffc800;
-        color: #212529;
-        font-weight: 600;
-        border: none;
-        transition: 0.3s;
-        padding: 0.75rem;
-        font-size: 1.15rem;
-    }
-    .btn-publish:hover {
-        background-color: #e6b800;
-        color: #212529;
-        box-shadow: 0 0 15px rgba(255,200,0,0.6);
-        transform: scale(1.03);
-    }
-
-    /* Alert messages */
-    .alert { margin-top: 1rem; }
-
-    /* Checkbox inline améliorée */
-    .form-check-inline { 
-        margin-right: 1rem; 
-        font-weight: 500;
-    }
-
-    /* Labels */
-    label {
-        font-weight: 600;
-        color: #212529;
-    }
-
-    @media (max-width: 576px) {
-        .form-container { padding: 1.5rem; margin-top: 3rem; }
-        .btn-publish { font-size: 1rem; padding: 0.6rem; }
-    }
+    body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .navbar-custom { background: linear-gradient(90deg, #1e293b, #020617); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .navbar-custom .navbar-brand { font-weight: 700; color: #ffc800 !important; }
+    .navbar-custom .nav-link { color: #ffffff !important; }
+    .form-container { max-width: 900px; margin: 4rem auto 3rem auto; padding: 2.5rem; background-color: #fff; border-radius: 1.25rem; box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.2); }
+    h2 { text-align: center; margin-bottom: 2rem; font-weight: 700; color: #212529; }
+    input, select, textarea { width: 100%; padding: 0.65rem 0.85rem; border-radius: 0.5rem; border: 1px solid #ced4da; margin-top: 0.25rem; margin-bottom: 1rem; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #ffc800; box-shadow: 0 0 0 0.25rem rgba(255,200,0,0.25); }
+    .btn-publish { background-color: #ffc800; color: #212529; font-weight: 600; border: none; padding: 0.75rem; font-size: 1.15rem; transition: 0.3s; }
+    .btn-publish:hover { background-color: #e6b800; transform: scale(1.03); }
+    .form-check-inline { margin-right: 1rem; font-weight: 500; }
+    label { font-weight: 600; color: #212529; }
 </style>
 </head>
 <body>
@@ -124,23 +26,9 @@
 <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
     <div class="container">
         <a class="navbar-brand" href="{% url 'admin_dashboard' %}">Espace Admin</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAdmin">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarAdmin">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'admin_dashboard' %}">Dashboard</a>
-                </li>
-            </ul>
-            <div class="d-flex align-items-center">
-                <span class="navbar-text me-3 text-white">
-                    {{ user.first_name }} {{ user.last_name }}
-                </span>
-                <a href="{% url 'signout' %}" class="btn btn-outline-warning ms-2">
-                    Se déconnecter
-                </a>
-            </div>
+        <div class="d-flex align-items-center ms-auto">
+            <span class="navbar-text me-3 text-white">{{ user.first_name }} {{ user.last_name }}</span>
+            <a href="{% url 'signout' %}" class="btn btn-sm btn-outline-warning">Se déconnecter</a>
         </div>
     </div>
 </nav>
@@ -159,9 +47,7 @@
             {% csrf_token %}
             
             {% if form.non_field_errors %}
-                <div class="alert alert-danger">
-                    {{ form.non_field_errors }}
-                </div>
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
             {% endif %}
 
             <div class="mb-3">
@@ -177,20 +63,16 @@
                 <div class="col-md-6">
                     {{ form.club.label_tag }}
                     {{ form.club }}
-                    {% if form.club.errors %}
-                        <div class="text-danger small">{{ form.club.errors }}</div>
-                    {% endif %}
+                    <div class="text-danger small">{{ form.club.errors }}</div>
                 </div>
                 <div class="col-md-6">
                     {{ form.event.label_tag }}
                     {{ form.event }}
-                     {% if form.event.errors %}
-                        <div class="text-danger small">{{ form.event.errors }}</div>
-                    {% endif %}
+                    <div class="text-danger small">{{ form.event.errors }}</div>
                 </div>
             </div>
 
-            <div class="row g-3">
+            <div class="row g-3 mt-1">
                 <div class="col-md-6">
                     {{ form.start_date.label_tag }}
                     {{ form.start_date }}
@@ -198,6 +80,7 @@
                 <div class="col-md-6">
                     {{ form.end_date.label_tag }}
                     {{ form.end_date }}
+                    <div class="text-danger small">{{ form.end_date.errors }}</div>
                 </div>
             </div>
 
@@ -211,11 +94,15 @@
                         </div>
                     {% endfor %}
                 </div>
+                <div class="text-danger small fw-bold mt-1">
+                    {{ form.target_postes.errors }}
+                </div>
             </div>
 
             <div class="mb-3">
                 {{ form.cellules.label_tag }}
                 {{ form.cellules }}
+                <div class="form-text text-muted">Les cellules affichées dépendent du Club et/ou de l'Event sélectionnés.</div>
             </div>
 
             <button type="submit" class="btn btn-publish w-100 mt-3">Publier</button>
@@ -229,64 +116,73 @@ document.addEventListener('DOMContentLoaded', function() {
     const eventSelect = document.getElementById('id_event');
     const cellulesSelect = document.getElementById('id_cellules');
 
-    // Fonction pour gérer le verrouillage mutuel
-    function toggleFields() {
-        if (clubSelect.value) {
-            // Si Club sélectionné -> On désactive Event
-            eventSelect.disabled = true;
-            eventSelect.value = ""; // On vide l'event
-        } else if (eventSelect.value) {
-            // Si Event sélectionné -> On désactive Club
-            clubSelect.disabled = true;
-            clubSelect.value = ""; // On vide le club
-        } else {
-            // Si rien sélectionné -> Tout est actif
-            clubSelect.disabled = false;
-            eventSelect.disabled = false;
-        }
-        
-        // Une fois qu'on a décidé qui est actif, on charge les cellules correspondantes
-        loadCells();
-    }
+    function updateForm(triggerSource) {
+        const clubId = clubSelect.value;
+        const eventId = eventSelect.value;
 
-    // Fonction AJAX pour charger les cellules (modifiée)
-    function loadCells() {
-        let clubId = clubSelect.value;
-        let eventId = eventSelect.value;
-        
-        // Si aucun des deux n'est sélectionné, on vide la liste des cellules et on arrête
-        if (!clubId && !eventId) {
-            cellulesSelect.innerHTML = '';
-            return;
-        }
-
+        // Préparation de l'URL
         let url = "{% url 'ajax_load_cells_events' %}?";
-        if (clubId) url += 'club=' + clubId;
-        else if (eventId) url += 'event=' + eventId;
+        if (clubId) url += 'club=' + clubId + '&';
+        if (eventId) url += 'event=' + eventId;
 
         fetch(url)
         .then(response => response.json())
         .then(data => {
-            // Mise à jour des cellules uniquement
+            // 1. MISE À JOUR DES ÉVÉNEMENTS (Seulement si c'est le Club qui a changé)
+            if (triggerSource === 'club') {
+                eventSelect.innerHTML = '';
+                let defaultOption = document.createElement('option');
+                defaultOption.value = "";
+                defaultOption.textContent = "---------";
+                eventSelect.appendChild(defaultOption);
+
+                if (data.events && data.events.length > 0) {
+                    data.events.forEach(ev => {
+                        let option = document.createElement('option');
+                        option.value = ev.id;
+                        option.textContent = ev.titre;
+                        if (ev.id == eventId) option.selected = true; 
+                        eventSelect.appendChild(option);
+                    });
+                }
+            }
+
+            // 2. MISE À JOUR DES CELLULES
             cellulesSelect.innerHTML = '';
-            data.cellules.forEach(c => {
+            if (data.cellules.length > 0) {
+                data.cellules.forEach(c => {
+                    let option = document.createElement('option');
+                    option.value = c.id;
+                    option.textContent = c.nom;
+                    cellulesSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Erreur:', error));
+    }
+
+    clubSelect.addEventListener('change', function() {
+        updateForm('club');
+    });
+
+    eventSelect.addEventListener('change', function() {
+        updateForm('event');
+    });
+
+    if (clubSelect.value) {
+        let url = "{% url 'ajax_load_cells_events' %}?club=" + clubSelect.value;
+        if (eventSelect.value) url += "&event=" + eventSelect.value;
+        
+        fetch(url).then(r=>r.json()).then(d=>{
+             cellulesSelect.innerHTML = '';
+             d.cellules.forEach(c => {
                 let option = document.createElement('option');
                 option.value = c.id;
                 option.textContent = c.nom;
                 cellulesSelect.appendChild(option);
             });
-            // J'ai supprimé la partie qui chargeait les Events ici
-            // car cela créait un conflit avec votre logique d'exclusion.
-        })
-        .catch(error => console.error('Erreur AJAX:', error));
+        });
     }
-
-    // Écouteurs d'événements
-    clubSelect.addEventListener('change', toggleFields);
-    eventSelect.addEventListener('change', toggleFields);
-
-    // Lancer au chargement de la page (au cas où il y a des erreurs de validation et que la page se recharge avec des données)
-    toggleFields();
 });
 </script>
 
