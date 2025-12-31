@@ -125,8 +125,7 @@
 </head>
 <body>
 
-    <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
     <div class="container">
         <a class="navbar-brand" href="{% url 'admin_dashboard' %}">Espace Admin</a>
 
@@ -189,7 +188,6 @@
 
         </div>
 
-<!-- MODAL CLUB -->
 <div class="modal fade" id="clubModal{{ club.id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -201,7 +199,6 @@
                 {% if club.image and club.image.name %}
                     <img class="img-fluid mb-3" src="{{ club.image.url }}" alt="{{ club.nom }}">
                 {% endif %}
-                <!--<p>{{ club.description }}</p>-->
                 <p><strong>Année :</strong> {{ club.annee }}</p>
                 {% if club.president %}
     <p><strong>Président :</strong> {{ club.president.first_name }} {{ club.president.last_name }}</p>
@@ -264,7 +261,6 @@
 </div>
 
 
-<!-- MODAL EDIT CLUB -->
 <div class="modal fade" id="editClubModal{{ club.id }}" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -290,7 +286,6 @@
 </div>
 
 
-        <!-- MODAL DELETE CLUB -->
         <div class="modal fade" id="deleteClubModal{{ club.id }}" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -342,7 +337,6 @@
             </div>
         </div>
 
-<!-- MODAL EVENT -->
 <div class="modal fade" id="eventModal{{ event.id }}" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -354,7 +348,6 @@
                 {% if event.image and event.image.name %}
                     <img class="img-fluid mb-3" src="{{ event.image.url }}" alt="{{ event.titre }}">
                 {% endif %}
-                <!--<p>{{ event.description }}</p>-->
                 <p><strong>Date :</strong> {{ event.date }}</p>
                 <p><strong>Club :</strong> {{ event.club }}</p>
                 <p><strong>Président :</strong>
@@ -433,7 +426,6 @@
 
 
 
-<!-- MODAL EDIT EVENT -->
 <div class="modal fade" id="editEventModal{{ event.id }}" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -459,7 +451,6 @@
 </div>
 
 
-        <!-- MODAL DELETE EVENT -->
         <div class="modal fade" id="deleteEventModal{{ event.id }}" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -483,10 +474,8 @@
     </div>
 </div>
 
-<!-- MODAL CREATE CLUB -->
 <div class="modal fade" id="createClubModal" tabindex="-1">
-    <div class="modal-dialog modal-lg"> <!-- plus large pour les cellules -->
-        <div class="modal-content">
+    <div class="modal-dialog modal-lg"> <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Ajouter un Club</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -502,16 +491,14 @@
 
     {{ club_cellule_formset.management_form }}
 
-    <!-- EMPTY FORM -->
     <div id="club-empty-form" class="cellule-form border p-2 mb-2 rounded d-none">
-        {{ club_cellule_formset.empty_form.nom.label_tag }}
+        <label for="{{ club_cellule_formset.empty_form.nom.id_for_label }}">Nom <span class="text-danger">*</span></label>
         {{ club_cellule_formset.empty_form.nom }}
 
         {{ club_cellule_formset.empty_form.description.label_tag }}
         {{ club_cellule_formset.empty_form.description }}
     </div>
 
-    <!-- CONTENEUR -->
     <div id="club-cellules"></div>
 
     <button type="button" class="btn btn-primary mt-2" id="add-club-cellule">
@@ -529,7 +516,6 @@
 
 
 
-<!-- MODAL CREATE EVENT -->
 <div class="modal fade" id="createEventModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -549,16 +535,14 @@
 
     {{ event_cellule_formset.management_form }}
 
-    <!-- EMPTY FORM (MODELE) -->
     <div id="event-empty-form" class="cellule-form border p-2 mb-2 rounded d-none">
-        {{ event_cellule_formset.empty_form.nom.label_tag }}
+        <label for="{{ event_cellule_formset.empty_form.nom.id_for_label }}">Nom <span class="text-danger">*</span></label>
         {{ event_cellule_formset.empty_form.nom }}
 
         {{ event_cellule_formset.empty_form.description.label_tag }}
         {{ event_cellule_formset.empty_form.description }}
     </div>
 
-    <!-- CONTENEUR -->
     <div id="event-cellules"></div>
 
     <button type="button" class="btn btn-primary mt-2" id="add-event-cellule">
@@ -641,24 +625,16 @@ document.addEventListener('DOMContentLoaded', function () {
         addEventCellule();
     }
 
-    function toggleEventCellules() {
-        if (clubSelect.value) {
-            eventWrapper.style.display = 'none';
-            eventTitle.style.display = 'none';
-        } else {
-            eventWrapper.style.display = 'block';
-            eventTitle.style.display = 'block';
-        }
-    }
+    // J'AI SUPPRIMÉ LA FONCTION toggleEventCellules ICI POUR QUE CA NE DISPARAISSE PLUS
 
     eventModal.addEventListener('shown.bs.modal', function () {
         clubSelect.value = '';
         resetEventFormset();
-        toggleEventCellules();
+        // toggleEventCellules(); // SUPPRIMÉ
     });
 
     addEventBtn.addEventListener('click', addEventCellule);
-    clubSelect.addEventListener('change', toggleEventCellules);
+    // clubSelect.addEventListener('change', toggleEventCellules); // SUPPRIMÉ
 
 });
 </script>

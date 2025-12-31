@@ -168,10 +168,20 @@
                                 <strong>Du :</strong> {{ annonce.start_date }} <br>
                                 <strong>Au :</strong> {{ annonce.end_date }}
                             </p>
+                            
                             <p class="card-text text-muted">
-                                <strong>Club :</strong> {% if annonce.club %} {{ annonce.club.nom }} {% else %}-{% endif %} <br>
+                                <strong>Club :</strong> 
+                                {% if annonce.club %} 
+                                    {{ annonce.club.nom }} 
+                                {% elif annonce.event and annonce.event.club %}
+                                    {{ annonce.event.club.nom }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                                <br>
                                 <strong>Event :</strong> {% if annonce.event %} {{ annonce.event.titre }} {% else %}-{% endif %}
                             </p>
+                            
                         </div>
                     </div>
                 </div>

@@ -13,7 +13,7 @@ urlpatterns = [
     # ------------------------
 
     # Le reste ne change pas
-    path('ajax/load-cells-events/', views.load_cells_events, name='ajax_load_cells_events'),
+    path('ajax/load-cells-events/', views.load_cells_events, name='load_cells_events'),
     path('postuler/<int:annonce_id>/', views.postuler, name='postuler'),
     path('admin-candidatures/<int:annonce_id>/', views.admin_candidatures, name='admin_candidatures'),
     path('traiter-candidature/<int:cand_id>/<str:action>/', views.traiter_candidature, name='traiter_candidature'),

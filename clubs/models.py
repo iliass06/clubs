@@ -25,7 +25,7 @@ class Event(models.Model):
     titre = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     date = models.DateField()
-    club = models.ForeignKey(Club, null=True, blank=True, on_delete=models.SET_NULL, related_name='events')
+    club = models.ForeignKey(Club, null=True, blank=True, on_delete=models.CASCADE, related_name='events')
     president = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='events_president')
     chefs = models.ManyToManyField(User, blank=True, related_name='events_chefs')
     image = models.ImageField(upload_to='events/', null=True, blank=True)

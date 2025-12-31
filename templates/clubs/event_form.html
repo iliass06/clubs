@@ -1,6 +1,39 @@
-<h2>{% if form.instance.pk %}Modifier{% else %}Créer{% endif %} {{ form.instance._meta.model_name|capfirst }}</h2>
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Enregistrer</button>
-</form>
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Créer un nouvel Événement</h2>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">Détails de l'événement</div>
+            <div class="card-body">
+                {{ form.as_p }}
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                Ajouter des Cellules (Optionnel)
+            </div>
+            <div class="card-body">
+                {{ formset.management_form }}
+                
+                {% for form_cellule in formset %}
+                    <div class="border p-3 mb-2 rounded bg-light">
+                        <strong>Nouvelle Cellule :</strong>
+                        {{ form_cellule.as_p }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg">
+            <i class="fas fa-save"></i> Créer l'événement et ses cellules
+        </button>
+        <a href="{% url 'gestion_club_event' %}" class="btn btn-secondary btn-lg">Annuler</a>
+    </form>
+</div>
+{% endblock %}

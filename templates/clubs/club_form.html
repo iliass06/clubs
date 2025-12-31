@@ -1,4 +1,4 @@
-<h2>{% if form.instance.pk %}Modifier{% else %}Créer{% endif %} {{ form.instance._meta.model_name|capfirst }}</h2>
+<h2>{% if form.instance.pk %}Modifier{% else %}Créer{% endif %} un Club</h2>
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.as_p }}

@@ -22,26 +22,30 @@ from clubs.models import Cellule, Event
 def load_cells_events(request):
     club_id = request.GET.get('club')
     event_id = request.GET.get('event')
+
+    # --- MODIFICATION ICI : On ajoute 'club_id' pour savoir qui est le parent ---
+    events_qs = Event.objects.all().values('id', 'titre', 'club_id')
+    
     cellules = Cellule.objects.none()
     
     if club_id:
         cellules = cellules | Cellule.objects.filter(club_id=club_id)
-        events_qs = Event.objects.filter(club_id=club_id).values('id', 'titre')
-        return JsonResponse({
-            'cellules': list(cellules.distinct().values('id', 'nom')),
-            'events': list(events_qs)
-        })
+        # On garde le filtre, mais on inclut toujours 'club_id'
+        events_qs = Event.objects.filter(club_id=club_id).values('id', 'titre', 'club_id')
     
     if event_id:
         cellules = cellules | Cellule.objects.filter(event_id=event_id)
 
-    cellules_list = list(cellules.distinct().values('id', 'nom'))
-    return JsonResponse({'cellules': cellules_list})
-
+    return JsonResponse({
+        'cellules': list(cellules.distinct().values('id', 'nom')),
+        'events': list(events_qs)
+    })
 
 # ==========================================
 # 2. GESTION ANNONCE (Inchangé)
 # ==========================================
+# recrutement/views.py
+
 @login_required
 def gerer_annonce(request, id=None):
     try:
@@ -63,9 +67,27 @@ def gerer_annonce(request, id=None):
         form = AnnonceForm(request.POST, request.FILES, instance=annonce)
         if form.is_valid():
             obj = form.save(commit=False)
+            
+            # --- LOGIQUE DE PRIORITÉ (Ce que tu as demandé) ---
+            
+            if obj.event:
+                # CAS 1 : C'est un Event (qu'il soit lié à un club ou non)
+                # On détache le club direct de l'annonce pour que la candidature
+                # ne concerne QUE l'événement.
+                # (On pourra toujours retrouver le club via obj.event.club si besoin pour l'affichage)
+                obj.club = None
+                
+            elif obj.club:
+                # CAS 2 : Pas d'event, mais un Club est sélectionné
+                # La candidature concerne le Club directement.
+                pass # On garde obj.club tel quel
+
+            # --------------------------------------------------
+
             if not annonce:
                 obj.publisher = request.user
                 obj.publisher_type = 'admin'
+            
             obj.save()
             form.save_m2m()
             
@@ -91,52 +113,84 @@ def postuler(request, annonce_id):
         return redirect(f"{reverse('signin')}?next={request.path}")
 
     annonce = get_object_or_404(Annonce, pk=annonce_id)
+    
+    # On identifie les contextes (Club ou Event)
     club_concerne = annonce.club if hasattr(annonce, 'club') else None
     event_concerne = annonce.event if hasattr(annonce, 'event') else None
 
-    # Vérification si candidature déjà en cours
-    if Candidature.objects.filter(username=request.user.username, annonce=annonce).exclude(status__in=['acceptee', 'refusee']).exists():
-            messages.warning(request, "Vous avez déjà une candidature en cours pour cette annonce.")
-            return redirect('home')
+    # On récupère l'historique des candidatures de cet utilisateur pour CETTE annonce
+    historique = Candidature.objects.filter(username=request.user.username, annonce=annonce)
+
+    # ==============================================================================
+    # 1. LOGIQUE DE BLOCAGE INTELLIGENT (PROMOTION INTERNE)
+    # ==============================================================================
+
+    # A. Si l'utilisateur a déjà été REFUSÉ -> BANNI de cette annonce
+    if historique.filter(status='refusee').exists():
+        messages.error(request, "Votre candidature précédente a été refusée. Vous ne pouvez plus postuler à cette annonce.")
+        return redirect('home')
+
+    # B. Si l'utilisateur a une candidature EN ATTENTE -> DOIT ATTENDRE
+    if historique.filter(status='en_attente').exists():
+        messages.warning(request, "Vous avez déjà une candidature en cours de traitement. Veuillez attendre la réponse.")
+        return redirect('home')
+
+    # C. Si l'utilisateur est déjà accepté comme CHEF ou PRÉSIDENT -> STOP (Grade Max atteint)
+    if historique.filter(status='acceptee', profil_souhaite__in=['chef_cellule', 'president']).exists():
+        messages.info(request, "Vous avez déjà obtenu un poste à responsabilité via cette annonce.")
+        return redirect('home')
+
+    # D. Cas Spécial : Si déjà accepté comme MEMBRE
+    deja_membre_accepte = historique.filter(status='acceptee', profil_souhaite='membre').exists()
+
+    # ==============================================================================
 
     if request.method == 'POST':
         form = CandidatureForm(request.POST, annonce=annonce, user=request.user)
 
         if form.is_valid():
             profil_choisi = form.cleaned_data.get('profil_souhaite')
+            cellule_choisie = form.cleaned_data.get('cellule') # On récupère la cellule choisie
+
+            # ==================================================================
+            # NOUVELLE RÈGLE : MEMBRE = CELLULE OBLIGATOIRE
+            # ==================================================================
+            if profil_choisi == 'membre' and not cellule_choisie:
+                messages.error(request, "Erreur : Pour postuler en tant que Membre, vous devez OBLIGATOIREMENT choisir une cellule.")
+                # On réaffiche le formulaire avec l'erreur sans sauvegarder
+                return render(request, 'recrutement/postuler.html', {'form': form, 'annonce': annonce})
+            # ==================================================================
             
-            # --- RÈGLE D'OR : PAS DE DOUBLE CASQUETTE (Président <-> Chef) ---
-            
-            # 1. Vérification pour CLUB
+            # --- VERIFICATION PROMOTION INTERNE ---
+            if deja_membre_accepte and profil_choisi == 'membre':
+                messages.error(request, "Vous êtes déjà Membre accepté. Pour repostuler, vous devez viser un poste supérieur (Chef de cellule ou Président).")
+                return render(request, 'recrutement/postuler.html', {'form': form, 'annonce': annonce})
+
+            # --- RÈGLES DE HIERARCHIE ---
+            # Vérifications CLUB
             if club_concerne:
-                # Si je veux être CHEF alors que je suis PRÉSIDENT
                 if profil_choisi == 'chef_cellule' and club_concerne.president == request.user:
-                    messages.error(request, "Interdit : Le Président du club ne peut pas être Chef de cellule dans le même club.")
+                    messages.error(request, "Interdit : Le Président du club ne peut pas être Chef de cellule.")
                     return redirect('home')
-
-                # Si je veux être PRÉSIDENT alors que je suis CHEF
                 if profil_choisi == 'president' and Cellule.objects.filter(club=club_concerne, chef=request.user).exists():
-                    messages.error(request, "Interdit : Un Chef de cellule ne peut pas devenir Président du même club sans démissionner d'abord.")
+                    messages.error(request, "Interdit : Un Chef de cellule ne peut pas devenir Président sans démissionner.")
                     return redirect('home')
-
-                # Promotion interne
+                
                 est_membre = club_concerne.membres.filter(pk=request.user.pk).exists()
                 if not est_membre and profil_choisi in ['chef_cellule', 'president']:
                     messages.error(request, "Refusé : Vous devez d'abord être Membre pour prétendre à ce poste.")
                     return redirect('home')
 
-            # 2. Vérification pour EVENT
+            # Vérifications EVENT
             if event_concerne:
-                # Si je veux être CHEF alors que je suis PRÉSIDENT EVENT
                 if profil_choisi == 'chef_cellule' and event_concerne.president == request.user:
-                    messages.error(request, "Interdit : Le Président de l'événement ne peut pas être Chef de cellule dans le même événement.")
+                    messages.error(request, "Interdit : Le Président de l'événement ne peut pas postuler comme Chef de cellule.")
                     return redirect('home')
-
-                # Si je veux être PRÉSIDENT EVENT alors que je suis CHEF
                 if profil_choisi == 'president' and Cellule.objects.filter(event=event_concerne, chef=request.user).exists():
-                    messages.error(request, "Interdit : Un Chef de cellule ne peut pas devenir Président du même événement.")
+                    messages.error(request, "Interdit : Un Chef de cellule ne peut pas devenir Président de l'événement.")
                     return redirect('home')
 
+            # Sauvegarde
             candidature = form.save(commit=False)
             candidature.annonce = annonce 
             if club_concerne: candidature.club = club_concerne
@@ -148,7 +202,12 @@ def postuler(request, annonce_id):
             candidature.username = request.user.username
             
             candidature.save()
-            messages.success(request, "Votre candidature a été envoyée avec succès !")
+            
+            if deja_membre_accepte:
+                messages.success(request, "Votre candidature pour un poste supérieur a été envoyée !")
+            else:
+                messages.success(request, "Votre candidature a été envoyée avec succès !")
+                
             return redirect('home')
         else:
              messages.error(request, "Veuillez corriger les erreurs dans le formulaire.")
@@ -159,7 +218,6 @@ def postuler(request, annonce_id):
         'form': form,
         'annonce': annonce
     })
-
 
 # ==========================================
 # 4. ADMIN CANDIDATURES (Inchangé)

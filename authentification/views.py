@@ -200,96 +200,30 @@ def membre_dashboard(request):
 # -------------------------
 @login_required
 def gestion_utilisateurs(request):
+    try:
+        if request.user.profil.profil != 'admin':
+            return redirect('home')
+    except:
+        return redirect('home')
 
-    def grouper_utilisateurs(profils, role):
-        data = {
-            "clubs": {},
-            "events_sans_club": {}
-        }
+    # 1. PRÉSIDENTS (Club & Event)
+    clubs_presidents = Club.objects.filter(president__isnull=False).select_related('president')
+    events_presidents = Event.objects.filter(president__isnull=False).select_related('president')
 
-        for profil in profils:
-            user = profil.user
+    # 2. CHEFS DE CELLULE (Récupère tout, on triera dans le HTML)
+    chefs_cellules = Cellule.objects.filter(chef__isnull=False).select_related('chef', 'club', 'event')
 
-            # =================================================
-            # 1. LOGIQUE POUR LES PRÉSIDENTS
-            # =================================================
-            if role == 'president':
-                # On récupère les clubs et events présidés
-                clubs = user.preside_clubs.all()
-                events = user.events_president.all()
-                
-                # Remplissage Clubs
-                for club in clubs:
-                    if club not in data["clubs"]: data["clubs"][club] = []
-                    # Info inutile pour président, on met vide
-                    data["clubs"][club].append({'user': user, 'info': ''})
-
-                # Remplissage Events sans club
-                for event in events:
-                    if not event.club:
-                        if event not in data["events_sans_club"]: data["events_sans_club"][event] = []
-                        data["events_sans_club"][event].append({'user': user, 'info': ''})
-
-            # =================================================
-            # 2. LOGIQUE POUR LES CHEFS DE CELLULE
-            # =================================================
-            elif role == 'chef_cellule':
-                cellules = user.chef_cellules.select_related('club', 'event').all()
-                
-                for cell in cellules:
-                    # Gestion Clubs
-                    if cell.club:
-                        if cell.club not in data["clubs"]: data["clubs"][cell.club] = []
-                        # Info = Nom de la cellule dirigée
-                        data["clubs"][cell.club].append({'user': user, 'info': cell.nom})
-                    
-                    # Gestion Events sans club
-                    elif cell.event and not cell.event.club:
-                        evt = cell.event
-                        if evt not in data["events_sans_club"]: data["events_sans_club"][evt] = []
-                        data["events_sans_club"][evt].append({'user': user, 'info': cell.nom})
-
-            # =================================================
-            # 3. LOGIQUE POUR LES MEMBRES (Celle qui t'intéresse)
-            # =================================================
-            else:
-                # On prend TOUS les clubs où il est membre (même sans cellule)
-                clubs = user.membres_club.all()
-                
-                for club in clubs:
-                    # On cherche s'il appartient à une cellule DANS CE CLUB
-                    # On filtre les cellules du user qui appartiennent à ce club
-                    user_cells_in_club = user.membres_cellule.filter(club=club)
-                    
-                    if user_cells_in_club.exists():
-                        # S'il a des cellules, on les liste (ex: "Sponsoring, Media")
-                        info_cellule = ", ".join([c.nom for c in user_cells_in_club])
-                    else:
-                        # S'il n'a pas de cellule, on affiche le tiret "-"
-                        info_cellule = "-"
-                    
-                    if club not in data["clubs"]: data["clubs"][club] = []
-                    data["clubs"][club].append({'user': user, 'info': info_cellule})
-
-                # Idem pour les events sans club
-                events = [c.event for c in user.membres_cellule.all() if c.event and not c.event.club]
-                for evt in set(events):
-                     if evt not in data["events_sans_club"]: data["events_sans_club"][evt] = []
-                     # Pour les events, il est forcément dans une cellule s'il est membre_cellule
-                     user_cells_in_event = user.membres_cellule.filter(event=evt)
-                     info = ", ".join([c.nom for c in user_cells_in_event])
-                     data["events_sans_club"][evt].append({'user': user, 'info': info})
-
-        return data
-
-    presidents = Profil.objects.filter(profil='president').select_related('user')
-    chefs = Profil.objects.filter(profil='chef_cellule').select_related('user')
-    membres = Profil.objects.filter(profil='membre').select_related('user')
+    # 3. MEMBRES (Par Club et Par Event)
+    clubs_list = Club.objects.prefetch_related('membres', 'cellules__membres').all()
+    # On récupère les events qui ont des cellules avec des membres
+    events_list = Event.objects.prefetch_related('cellules__membres').all()
 
     context = {
-        "presidents_groupes": grouper_utilisateurs(presidents, 'president'),
-        "chefs_groupes": grouper_utilisateurs(chefs, 'chef_cellule'),
-        "membres_groupes": grouper_utilisateurs(membres, 'membre'),
+        'clubs_presidents': clubs_presidents,
+        'events_presidents': events_presidents,
+        'chefs_cellules': chefs_cellules,
+        'clubs_list': clubs_list,
+        'events_list': events_list, # Ajouté pour l'affichage
     }
 
     return render(request, 'authentification/gestion_utilisateurs.html', context)

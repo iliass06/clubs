@@ -11,19 +11,29 @@
         h2 { font-weight: 700; }
         .role-card { border-radius: 16px; padding: 25px; margin-bottom: 50px; background: #fff; box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
         .role-title { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 20px; font-size: 1.3rem; }
-        .role-president { color: #6f42c1; }
-        .role-chef { color: #0d6efd; }
-        .role-membre { color: #198754; }
-        .table-custom { border-radius: 12px; overflow: hidden; background-color: #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.06); }
-        .table-custom th { text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; }
-        .table-custom tbody tr { transition: all 0.25s ease; }
-        .table-custom tbody tr:hover { background-color: #f8f9fa; transform: scale(1.002); }
-        .btn-action { border-radius: 6px; font-size: 0.8rem; padding: 5px 12px; margin-right: 5px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; }
+        
+        /* Couleurs des rôles */
+        .role-president { color: #6f42c1; border-bottom: 3px solid #6f42c1; padding-bottom: 10px; display: inline-block; }
+        .role-chef { color: #0d6efd; border-bottom: 3px solid #0d6efd; padding-bottom: 10px; display: inline-block; }
+        .role-membre { color: #198754; border-bottom: 3px solid #198754; padding-bottom: 10px; display: inline-block; }
+
+        .table-custom { border-radius: 12px; overflow: hidden; background-color: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
+        .table-custom th { text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; padding: 15px; }
+        .table-custom td { padding: 15px; vertical-align: middle; }
+        .table-custom tbody tr { transition: all 0.2s ease; }
+        .table-custom tbody tr:hover { background-color: #f1f3f5; }
+
+        .btn-action { border-radius: 6px; font-size: 0.8rem; padding: 5px 12px; margin-right: 5px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; transition: 0.2s; }
+        .btn-action:hover { transform: translateY(-2px); }
+
         .navbar-custom { background: linear-gradient(90deg, #1e293b, #020617); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .navbar-custom .navbar-brand { font-weight: 700; color: #ffc800 !important; }
         .navbar-custom .nav-link { color: #ffffff !important; }
         .navbar-custom .btn-outline-warning { border-radius: 10px; font-weight: 500; }
         .navbar-custom .btn-outline-warning:hover { background-color: #ffc800; color: #020617; }
+        
+        .badge-club { background-color: #ffc107; color: #000; }
+        .badge-event { background-color: #0dcaf0; color: #000; }
     </style>
 </head>
 <body>
@@ -42,148 +52,207 @@
     
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         {% endfor %}
     {% endif %}
 
-    <h2 class="text-center fw-bold mb-5">Gestion des utilisateurs</h2>
+    <h2 class="text-center fw-bold mb-5" style="color: #2c3e50;">Gestion des utilisateurs</h2>
 
     <div class="role-card">
-        <h4 class="role-title role-president"><i class="bi bi-award-fill"></i> Présidents</h4>
+        <div class="role-title"><i class="bi bi-award-fill role-president"></i> <span class="text-dark">Présidents</span></div>
         
-        {% for club, items in presidents_groupes.clubs.items %}
-            <h5 class="mt-4 text-secondary"><i class="bi bi-building"></i> Club : {{ club.nom }}</h5>
-            <div class="table-responsive">
-                <table class="table table-custom align-middle">
-                    <thead class="table-dark">
-                        <tr><th>Prénom</th><th>Nom</th><th>Email</th><th class="text-center" style="min-width: 350px;">Action</th></tr>
-                    </thead>
-                    <tbody>
-                    {% for item in items %}
-                        <tr>
-                            <td>{{ item.user.first_name }}</td>
-                            <td>{{ item.user.last_name }}</td>
-                            <td>{{ item.user.email }}</td>
-                            <td class="text-center">
-                                <a href="{% url 'modifier_utilisateur' item.user.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil-square"></i> Modifier</a>
-                                <a href="{% url 'desactiver_utilisateur' item.user.id 'retrograder' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Rétrograder ce Président ? Il redeviendra simple MEMBRE.');"><i class="bi bi-person-dash"></i> Retirer poste</a>
-                                <a href="{% url 'supprimer_utilisateur' item.user.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ce compte ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
-                            </td>
-                        </tr>
+        {% if clubs_presidents or events_presidents %}
+        <div class="table-responsive">
+            <table class="table table-custom align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Prénom</th>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Entité (Club / Event)</th>
+                        <th class="text-center" style="min-width: 350px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for club in clubs_presidents %}
+                    <tr>
+                        <td class="fw-bold">{{ club.president.first_name }}</td>
+                        <td class="fw-bold">{{ club.president.last_name }}</td>
+                        <td>{{ club.president.email }}</td>
+                        <td>
+                            <span class="badge badge-club me-2">Club</span> {{ club.nom }}
+                        </td>
+                        <td class="text-center">
+                            <a href="{% url 'modifier_utilisateur' club.president.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil-square"></i> Modifier</a>
+                            <a href="{% url 'desactiver_utilisateur' club.president.id 'retrograder' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Rétrograder ce Président ?');"><i class="bi bi-person-dash"></i> Retirer poste</a>
+                            <a href="{% url 'supprimer_utilisateur' club.president.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ce compte ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
+                        </td>
+                    </tr>
                     {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% empty %}
-            <p class="text-muted fst-italic ms-3">Aucun président de club.</p>
-        {% endfor %}
-        
-        {% for event, items in presidents_groupes.events_sans_club.items %}
-             <h5 class="mt-4 text-info"><i class="bi bi-calendar-event"></i> Event : {{ event.titre }}</h5>
-             <div class="table-responsive"><table class="table table-custom align-middle"><thead class="table-dark"><tr><th>Prénom</th><th>Nom</th><th>Email</th><th class="text-center">Action</th></tr></thead><tbody>
-             {% for item in items %}<tr><td>{{ item.user.first_name }}</td><td>{{ item.user.last_name }}</td><td>{{ item.user.email }}</td><td class="text-center"><a href="{% url 'modifier_utilisateur' item.user.id %}" class="btn btn-light border btn-action text-dark">Modifier</a><a href="{% url 'desactiver_utilisateur' item.user.id 'retrograder' %}" class="btn btn-warning btn-action text-dark">Retirer poste</a><a href="{% url 'supprimer_utilisateur' item.user.id %}" class="btn btn-dark btn-action">Supprimer</a></td></tr>{% endfor %}
-             </tbody></table></div>
-        {% endfor %}
+
+                    {% for event in events_presidents %}
+                    <tr>
+                        <td class="fw-bold">{{ event.president.first_name }}</td>
+                        <td class="fw-bold">{{ event.president.last_name }}</td>
+                        <td>{{ event.president.email }}</td>
+                        <td>
+                            <span class="badge badge-event me-2">Event</span> {{ event.titre }}
+                        </td>
+                        <td class="text-center">
+                            <a href="{% url 'modifier_utilisateur' event.president.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil-square"></i> Modifier</a>
+                            <a href="{% url 'desactiver_utilisateur' event.president.id 'retrograder' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Rétrograder ce Président ?');"><i class="bi bi-person-dash"></i> Retirer poste</a>
+                            <a href="{% url 'supprimer_utilisateur' event.president.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ce compte ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-light text-center">Aucun président actif pour le moment.</div>
+        {% endif %}
     </div>
 
 
     <div class="role-card">
-        <h4 class="role-title role-chef"><i class="bi bi-diagram-3-fill"></i> Chefs de cellule</h4>
+        <div class="role-title"><i class="bi bi-diagram-3-fill role-chef"></i> <span class="text-dark">Chefs de cellule</span></div>
 
-        {% for club, items in chefs_groupes.clubs.items %}
-            <h5 class="mt-4 text-secondary"><i class="bi bi-building"></i> Club : {{ club.nom }}</h5>
-            <div class="table-responsive">
-                <table class="table table-custom align-middle">
-                    <thead class="table-primary">
-                        <tr><th>Prénom</th><th>Nom</th><th>Email</th><th>Cellule dirigée</th><th class="text-center" style="min-width: 350px;">Action</th></tr>
-                    </thead>
-                    <tbody>
-                    {% for item in items %}
-                        <tr>
-                            <td>{{ item.user.first_name }}</td>
-                            <td>{{ item.user.last_name }}</td>
-                            <td>{{ item.user.email }}</td>
-                            <td class="fw-bold">{{ item.info }}</td> <td class="text-center">
-                                <a href="{% url 'modifier_utilisateur' item.user.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil"></i> Modifier</a>
-                                <a href="{% url 'desactiver_utilisateur' item.user.id 'retrograder' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Rétrograder ce Chef ? Il redeviendra simple MEMBRE.');"><i class="bi bi-person-dash"></i> Retirer poste</a>
-                                <a href="{% url 'supprimer_utilisateur' item.user.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ce compte ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% endfor %}
-
-        {% for event, items in chefs_groupes.events_sans_club.items %}
-             <h5 class="mt-4 text-info"><i class="bi bi-calendar-event"></i> Event : {{ event.titre }}</h5>
-             <div class="table-responsive"><table class="table table-custom align-middle"><thead class="table-primary"><tr><th>Prénom</th><th>Nom</th><th>Email</th><th>Cellule</th><th class="text-center">Action</th></tr></thead><tbody>
-             {% for item in items %}<tr><td>{{ item.user.first_name }}</td><td>{{ item.user.last_name }}</td><td>{{ item.user.email }}</td><td class="fw-bold">{{ item.info }}</td><td class="text-center"><a href="{% url 'modifier_utilisateur' item.user.id %}" class="btn btn-light border btn-action text-dark">Modifier</a><a href="{% url 'desactiver_utilisateur' item.user.id 'retrograder' %}" class="btn btn-warning btn-action text-dark">Retirer poste</a><a href="{% url 'supprimer_utilisateur' item.user.id %}" class="btn btn-dark btn-action">Supprimer</a></td></tr>{% endfor %}
-             </tbody></table></div>
-        {% endfor %}
+        {% if chefs_cellules %}
+        <div class="table-responsive">
+            <table class="table table-custom align-middle">
+                <thead class="bg-primary text-white">
+                    <tr>
+                        <th>Prénom</th>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Contexte</th>
+                        <th>Cellule dirigée</th>
+                        <th class="text-center" style="min-width: 350px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for cellule in chefs_cellules %}
+                    <tr>
+                        <td>{{ cellule.chef.first_name }}</td>
+                        <td>{{ cellule.chef.last_name }}</td>
+                        <td>{{ cellule.chef.email }}</td>
+                        <td>
+                            {% if cellule.club %}
+                                <span class="badge badge-club">Club : {{ cellule.club.nom }}</span>
+                            {% elif cellule.event %}
+                                <span class="badge badge-event">Event : {{ cellule.event.titre }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold text-primary">{{ cellule.nom }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'modifier_utilisateur' cellule.chef.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil"></i> Modifier</a>
+                            <a href="{% url 'desactiver_utilisateur' cellule.chef.id 'retrograder' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Rétrograder ce Chef ?');"><i class="bi bi-person-dash"></i> Retirer poste</a>
+                            <a href="{% url 'supprimer_utilisateur' cellule.chef.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ce compte ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-light text-center">Aucun chef de cellule actif.</div>
+        {% endif %}
     </div>
 
 
     <div class="role-card">
-        <h4 class="role-title role-membre"><i class="bi bi-people-fill"></i> Membres</h4>
+        <div class="role-title"><i class="bi bi-people-fill role-membre"></i> <span class="text-dark">Membres</span></div>
 
-        {% for club, items in membres_groupes.clubs.items %}
-            <h5 class="mt-4 text-secondary"><i class="bi bi-building"></i> Club : {{ club.nom }}</h5>
-            <div class="table-responsive">
-                <table class="table table-custom align-middle">
-                    <thead class="table-success">
-                        <tr>
-                            <th>Prénom</th>
-                            <th>Nom</th>
-                            <th>Email</th>
-                            <th>Cellule</th> <th class="text-center" style="min-width: 350px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for item in items %}
-                        <tr>
-                            <td>{{ item.user.first_name }}</td>
-                            <td>{{ item.user.last_name }}</td>
-                            <td>{{ item.user.email }}</td>
-                            <td class="fw-bold text-dark">{{ item.info }}</td>
-                            <td class="text-center">
-                                <a href="{% url 'modifier_utilisateur' item.user.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil"></i> Modifier</a>
-                                <a href="{% url 'desactiver_utilisateur' item.user.id 'exclure' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Exclure ce membre du club ? (Il perdra son accès membre)');"><i class="bi bi-person-x"></i> Exclure</a>
-                                <a href="{% url 'supprimer_utilisateur' item.user.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ce compte ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        {% for club in clubs_list %}
+            {% if club.membres.all %}
+                <div class="mb-4">
+                    <h5 class="mt-3 mb-3 text-secondary border-bottom pb-2">
+                        <i class="bi bi-building"></i> Membres du Club : <strong class="text-dark">{{ club.nom }}</strong>
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>Prénom</th>
+                                    <th>Nom</th>
+                                    <th>Email</th>
+                                    <th>Statut</th>
+                                    <th class="text-center" style="min-width: 350px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for membre in club.membres.all %}
+                                <tr>
+                                    <td>{{ membre.first_name }}</td>
+                                    <td>{{ membre.last_name }}</td>
+                                    <td>{{ membre.email }}</td>
+                                    <td><span class="badge bg-light text-dark border">Membre</span></td>
+                                    <td class="text-center">
+                                        <a href="{% url 'modifier_utilisateur' membre.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil"></i> Modifier</a>
+                                        <a href="{% url 'desactiver_utilisateur' membre.id 'exclure' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Exclure ce membre ?');"><i class="bi bi-person-x"></i> Exclure</a>
+                                        <a href="{% url 'supprimer_utilisateur' membre.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
         {% endfor %}
 
-        {% for event, items in membres_groupes.events_sans_club.items %}
-            <h5 class="mt-4 text-info"><i class="bi bi-calendar-event"></i> Event : {{ event.titre }}</h5>
-            <div class="table-responsive">
-                <table class="table table-custom align-middle">
-                    <thead class="table-success">
-                        <tr><th>Prénom</th><th>Nom</th><th>Email</th><th>Cellule</th><th class="text-center" style="min-width: 350px;">Action</th></tr>
-                    </thead>
-                    <tbody>
-                    {% for item in items %}
-                        <tr>
-                            <td>{{ item.user.first_name }}</td><td>{{ item.user.last_name }}</td><td>{{ item.user.email }}</td>
-                            <td class="fw-bold">{{ item.info }}</td>
-                            <td class="text-center">
-                                <a href="{% url 'modifier_utilisateur' item.user.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil"></i> Modifier</a>
-                                <a href="{% url 'desactiver_utilisateur' item.user.id 'exclure' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Exclure ce membre ?');"><i class="bi bi-person-x"></i> Exclure</a>
-                                <a href="{% url 'supprimer_utilisateur' item.user.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        {% for event in events_list %}
+            {% with event.cellules.all as cellules %}
+            {% if cellules %}
+                {%  for cellule in cellules %}
+                    {% if cellule.membres.all %}
+                        <div class="mb-4">
+                            <h5 class="mt-3 mb-3 text-info border-bottom pb-2">
+                                <i class="bi bi-calendar-event"></i> Membres de l'Event : <strong class="text-dark">{{ event.titre }}</strong> <small class="text-muted">({{ cellule.nom }})</small>
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-custom align-middle">
+                                    <thead class="bg-info text-white">
+                                        <tr>
+                                            <th>Prénom</th>
+                                            <th>Nom</th>
+                                            <th>Email</th>
+                                            <th>Cellule</th>
+                                            <th class="text-center" style="min-width: 350px;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for membre in cellule.membres.all %}
+                                        <tr>
+                                            <td>{{ membre.first_name }}</td>
+                                            <td>{{ membre.last_name }}</td>
+                                            <td>{{ membre.email }}</td>
+                                            <td class="fw-bold">{{ cellule.nom }}</td>
+                                            <td class="text-center">
+                                                <a href="{% url 'modifier_utilisateur' membre.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil"></i> Modifier</a>
+                                                <a href="{% url 'desactiver_utilisateur' membre.id 'exclure' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Exclure ce membre ?');"><i class="bi bi-person-x"></i> Exclure</a>
+                                                <a href="{% url 'supprimer_utilisateur' membre.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
         {% endfor %}
+        
+        {% if not clubs_list and not events_list %}
+             <div class="alert alert-light text-center">Aucun membre enregistré.</div>
+        {% endif %}
     </div>
 
 </div>

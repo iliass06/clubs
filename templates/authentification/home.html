@@ -203,9 +203,25 @@
                                 
                                 <p class="card-text text-muted small">{{ annonce.description|truncatewords:20 }}</p>
                                 
-                                <div class="badge bg-light text-dark mb-3 border">
-                                    {% if annonce.club %} Club : {{ annonce.club.nom }} {% endif %}
-                                    {% if annonce.event %} Event : {{ annonce.event.titre }} {% endif %}
+                                <div class="badge bg-light text-dark mb-3 border p-2 w-100" style="white-space: normal;">
+                                    <div class="mb-1">
+                                        <strong>Club :</strong>
+                                        {% if annonce.club %}
+                                            {{ annonce.club.nom }}
+                                        {% elif annonce.event and annonce.event.club %}
+                                            {{ annonce.event.club.nom }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <strong>Event :</strong>
+                                        {% if annonce.event %}
+                                            {{ annonce.event.titre }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </div>
                                 </div>
 
                                 <p class="card-text text-muted small">
