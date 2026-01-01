@@ -114,17 +114,24 @@
                             {% if cellule.event %}Event : {{ cellule.event.titre }}{% endif %}
                         </p>
                         <span class="badge bg-success mb-3">Membre de cellule</span>
-                        <a href="{% url 'quitter_poste' 'cellule' cellule.id 'membre' %}" 
-                           class="btn btn-outline-danger btn-sm w-100 mt-2"
-                           onclick="return confirm('Voulez-vous quitter cette cellule ?');">
-                            <i class="fas fa-times me-1"></i> Quitter la cellule
-                        </a>
+
+                        {% if cellule.club %}
+                            <a href="{% url 'quitter_poste' 'club' cellule.club.id 'membre' %}" 
+                               class="btn btn-outline-danger btn-sm w-100 mt-2"
+                               onclick="return confirm('⚠️ RÈGLE DU CLUB :\n\nOn ne peut pas être membre sans cellule.\nEn quittant la cellule {{ cellule.nom }}, vous quitterez automatiquement le Club {{ cellule.club.nom }}.\n\nConfirmer ?');">
+                                <i class="fas fa-door-open me-1"></i> Quitter le Club
+                            </a>
+                        {% else %}
+                            <a href="{% url 'quitter_poste' 'cellule' cellule.id 'membre' %}" 
+                               class="btn btn-outline-danger btn-sm w-100 mt-2"
+                               onclick="return confirm('Voulez-vous quitter cette cellule ?');">
+                                <i class="fas fa-times me-1"></i> Quitter la cellule
+                            </a>
+                        {% endif %}
+                        
                     </div>
                 </div>
                 {% endfor %}
-            </div>
-        </div>
-    </div>
     {% endif %}
     
     {% if not mes_presidences_clubs and not mes_presidences_events and not mes_cellules_chef and not mes_cellules_membre and not mes_clubs_membre %}
@@ -135,7 +142,6 @@
             <a href="{% url 'home' %}#annonces" class="btn btn-primary fw-bold">Voir les annonces de recrutement</a>
         </div>
     {% endif %}
-
 
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white border-bottom-0 pt-4 px-4">
@@ -182,13 +188,9 @@
                                 {% endif %}
                             </td>
                             <td class="text-end pe-4">
-                                {% if cand.etat_actuel == "Actif" %}
-                                    <span class="badge bg-info text-dark">Actif</span>
-                                {% elif cand.etat_actuel == "Retiré" %}
-                                    <span class="badge bg-secondary">Retiré du poste</span>
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
+                                <span class="badge bg-{{ cand.css_class }}">
+                                    {{ cand.etat_visuel }}
+                                </span>
                             </td>
                         </tr>
                         {% empty %}

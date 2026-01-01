@@ -108,82 +108,79 @@ def admin_dashboard(request):
 # -------------------------
 # ESPACE PRESIDENT
 # -------------------------
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from recrutement.models import Candidature
+from clubs.models import Cellule 
+
 @login_required
 def membre_dashboard(request):
     user = request.user
 
-    # --- PARTIE 1 : RÉCUPÉRATION DE TOUS LES RÔLES POSSIBLES ---
-    
-    # Présidences
+    # --- PARTIE 1 : RÉCUPÉRATION DES RÔLES ACTUELS ---
     mes_presidences_clubs = user.preside_clubs.all()
     mes_presidences_events = user.events_president.all()
-    
-    # Responsabilités (Chefs)
     mes_cellules_chef = user.chef_cellules.select_related('club', 'event').all()
-    
-    # Adhésions simples (Membres)
     mes_cellules_membre = user.membres_cellule.select_related('club', 'event').all()
     mes_clubs_membre = user.membres_club.all()
 
-
-    # --- PARTIE 2 : HISTORIQUE AVEC LOGIQUE "ACTIF/RETIRÉ" ---
-    # On trie du plus récent au plus ancien pour appliquer la logique "Premier arrivé = Actif"
+    # --- PARTIE 2 : HISTORIQUE INTELLIGENT ---
+    # CORRECTION ICI : On utilise 'created_at' au lieu de 'date_created'
     candidatures_qs = Candidature.objects.filter(username=user.username).select_related('annonce', 'club', 'event', 'cellule').order_by('-created_at')
     
     my_candidatures = []
-    mandats_actifs_attribues = set() # Mémoire pour éviter les doublons actifs
+    postes_actifs_memoire = set() 
 
-    for cand in candidatures_qs:
-        cand.etat_actuel = "-" 
+    for c in candidatures_qs:
+        # Par défaut
+        c.etat_visuel = c.get_status_display()
+        c.css_class = "secondary" 
+        
+        if c.status == 'en_attente':
+            c.css_class = "warning text-dark"
+        elif c.status == 'refusee':
+            c.css_class = "danger"
 
-        if cand.status == 'acceptee':
-            
-            # A. Identifier le contexte unique (Club X ou Event Y)
-            contexte_key = "inconnu"
-            if cand.club: contexte_key = f"club_{cand.club.id}"
-            elif cand.event: contexte_key = f"event_{cand.event.id}"
-            if cand.cellule: contexte_key += f"_cell_{cand.cellule.id}"
+        elif c.status == 'acceptee':
+            # 1. Vérification de la RÉALITÉ
+            est_toujours_en_poste = False
 
-            # B. Nettoyer le profil (gestion des vides/espaces)
-            raw_profil = str(cand.profil_souhaite).lower().strip()
-            if not raw_profil or raw_profil == 'none': raw_profil = 'membre'
+            # Cas CLUB
+            if c.club:
+                if c.profil_souhaite == 'membre':
+                    est_toujours_en_poste = c.club.membres.filter(pk=user.pk).exists()
+                elif c.profil_souhaite == 'chef_cellule':
+                    est_toujours_en_poste = Cellule.objects.filter(club=c.club, chef=user).exists()
+                elif c.profil_souhaite == 'president':
+                    est_toujours_en_poste = (c.club.president == user)
 
-            # C. Déterminer le rôle théorique et vérifier la présence réelle en base
-            role_key = "membre"
-            est_present_db = False
+            # Cas EVENT
+            elif c.event:
+                if c.profil_souhaite == 'membre':
+                    est_toujours_en_poste = Cellule.objects.filter(event=c.event, membres=user).exists()
+                elif c.profil_souhaite == 'chef_cellule':
+                    est_toujours_en_poste = Cellule.objects.filter(event=c.event, chef=user).exists()
+                elif c.profil_souhaite == 'president':
+                    est_toujours_en_poste = (c.event.president == user)
 
-            if 'president' in raw_profil:
-                role_key = "president"
-                if (cand.club and cand.club.president == user) or (cand.event and cand.event.president == user):
-                    est_present_db = True
-            elif 'chef' in raw_profil:
-                role_key = "chef"
-                if cand.cellule and cand.cellule.chef == user:
-                    est_present_db = True
-            else:
-                role_key = "membre"
-                if cand.club and user in cand.club.membres.all():
-                    est_present_db = True
-                elif cand.cellule and user in cand.cellule.membres.all():
-                    est_present_db = True
+            # 2. Clé unique
+            contexte_id = f"club_{c.club.id}" if c.club else f"event_{c.event.id}"
+            unique_key = f"{contexte_id}_{c.profil_souhaite}"
 
-            # D. Verdict final
-            signature = f"{contexte_key}_{role_key}"
-
-            if est_present_db:
-                # Si l'user est physiquement dans le club
-                if signature not in mandats_actifs_attribues:
-                    # C'est la candidature la plus récente pour ce poste -> ACTIF
-                    cand.etat_actuel = "Actif"
-                    mandats_actifs_attribues.add(signature)
+            # 3. Verdict Visuel
+            if est_toujours_en_poste:
+                if unique_key not in postes_actifs_memoire:
+                    c.etat_visuel = "Actif"
+                    c.css_class = "success"
+                    postes_actifs_memoire.add(unique_key)
                 else:
-                    # On a déjà marqué ce poste comme actif plus haut (donc plus récent) -> RETIRÉ
-                    cand.etat_actuel = "Retiré"
+                    c.etat_visuel = "Renouvellement / Archivé"
+                    c.css_class = "secondary"
             else:
-                # L'user n'est plus dans la base -> RETIRÉ
-                cand.etat_actuel = "Retiré"
+                c.etat_visuel = "Retiré / Ancien membre"
+                c.css_class = "dark" 
 
-        my_candidatures.append(cand)
+        my_candidatures.append(c)
 
     context = {
         'mes_presidences_clubs': mes_presidences_clubs,
@@ -206,24 +203,51 @@ def gestion_utilisateurs(request):
     except:
         return redirect('home')
 
-    # 1. PRÉSIDENTS (Club & Event)
+    # --- 1. RÉCUPÉRATION DES RÔLES EXISTANTS ---
+    
+    # Présidents
     clubs_presidents = Club.objects.filter(president__isnull=False).select_related('president')
     events_presidents = Event.objects.filter(president__isnull=False).select_related('president')
 
-    # 2. CHEFS DE CELLULE (Récupère tout, on triera dans le HTML)
+    # Chefs de cellule
     chefs_cellules = Cellule.objects.filter(chef__isnull=False).select_related('chef', 'club', 'event')
 
-    # 3. MEMBRES (Par Club et Par Event)
-    clubs_list = Club.objects.prefetch_related('membres', 'cellules__membres').all()
-    # On récupère les events qui ont des cellules avec des membres
+    # Membres (Clubs et Events via cellules)
+    clubs_list = Club.objects.prefetch_related('cellules__membres').all()
     events_list = Event.objects.prefetch_related('cellules__membres').all()
+
+
+    # --- 2. CALCUL DES UTILISATEURS SANS RÔLE ---
+    
+    # On crée un ensemble (set) pour stocker les IDs de tous ceux qui sont OCCUPÉS
+    ids_actifs = set()
+
+    # On ajoute les Présidents
+    for c in clubs_presidents: ids_actifs.add(c.president.id)
+    for e in events_presidents: ids_actifs.add(e.president.id)
+    
+    # On ajoute les Chefs
+    for chef in chefs_cellules: ids_actifs.add(chef.chef.id)
+    
+    # On ajoute les Membres de Clubs
+    for c in clubs_list:
+        for m in c.membres.all(): ids_actifs.add(m.id)
+        
+    # On ajoute les Membres d'Events
+    for e in events_list:
+        for cell in e.cellules.all():
+            for m in cell.membres.all(): ids_actifs.add(m.id)
+
+    # REQUÊTE FINALE : Tous les users SAUF ceux dans ids_actifs (et sauf les superadmins)
+    users_sans_role = User.objects.exclude(id__in=ids_actifs).exclude(is_superuser=True).order_by('-date_joined')
 
     context = {
         'clubs_presidents': clubs_presidents,
         'events_presidents': events_presidents,
         'chefs_cellules': chefs_cellules,
         'clubs_list': clubs_list,
-        'events_list': events_list, # Ajouté pour l'affichage
+        'events_list': events_list,
+        'users_sans_role': users_sans_role, # <--- La nouvelle liste
     }
 
     return render(request, 'authentification/gestion_utilisateurs.html', context)

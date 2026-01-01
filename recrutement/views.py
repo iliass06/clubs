@@ -118,30 +118,52 @@ def postuler(request, annonce_id):
     club_concerne = annonce.club if hasattr(annonce, 'club') else None
     event_concerne = annonce.event if hasattr(annonce, 'event') else None
 
-    # On récupère l'historique des candidatures de cet utilisateur pour CETTE annonce
+    # On récupère l'historique
     historique = Candidature.objects.filter(username=request.user.username, annonce=annonce)
 
     # ==============================================================================
-    # 1. LOGIQUE DE BLOCAGE INTELLIGENT (PROMOTION INTERNE)
+    # 0. VÉRIFICATION DE LA RÉALITÉ (MODIFICATION ICI)
+    # On vérifie si l'utilisateur est VRAIMENT encore dans le groupe actuellement.
+    # ==============================================================================
+    est_reellement_membre = False
+    est_reellement_chef = Cellule.objects.filter(chef=request.user).exists()
+    est_reellement_president = False
+
+    if club_concerne:
+        est_reellement_membre = club_concerne.membres.filter(pk=request.user.pk).exists()
+        if club_concerne.president == request.user: est_reellement_president = True
+    elif event_concerne:
+        # Pour un event, on est membre si on est dans une de ses cellules
+        est_reellement_membre = Cellule.objects.filter(event=event_concerne, membres=request.user).exists()
+        if event_concerne.president == request.user: est_reellement_president = True
+
+    # ==============================================================================
+    # 1. LOGIQUE DE BLOCAGE INTELLIGENT
     # ==============================================================================
 
-    # A. Si l'utilisateur a déjà été REFUSÉ -> BANNI de cette annonce
+    # A. Si REFUSÉ -> Toujours banni
     if historique.filter(status='refusee').exists():
         messages.error(request, "Votre candidature précédente a été refusée. Vous ne pouvez plus postuler à cette annonce.")
         return redirect('home')
 
-    # B. Si l'utilisateur a une candidature EN ATTENTE -> DOIT ATTENDRE
+    # B. Si EN ATTENTE -> Doit attendre
     if historique.filter(status='en_attente').exists():
         messages.warning(request, "Vous avez déjà une candidature en cours de traitement. Veuillez attendre la réponse.")
         return redirect('home')
 
-    # C. Si l'utilisateur est déjà accepté comme CHEF ou PRÉSIDENT -> STOP (Grade Max atteint)
-    if historique.filter(status='acceptee', profil_souhaite__in=['chef_cellule', 'president']).exists():
-        messages.info(request, "Vous avez déjà obtenu un poste à responsabilité via cette annonce.")
+    # C. Si ACCEPTÉ comme CHEF/PRÉSIDENT
+    # MODIFIÉ : On bloque SEULEMENT s'il occupe ENCORE le poste. S'il a été viré, il peut repostuler.
+    historique_grade = historique.filter(status='acceptee', profil_souhaite__in=['chef_cellule', 'president']).exists()
+    
+    if historique_grade and (est_reellement_chef or est_reellement_president):
+        messages.info(request, "Vous occupez déjà un poste à responsabilité via cette annonce.")
         return redirect('home')
 
     # D. Cas Spécial : Si déjà accepté comme MEMBRE
-    deja_membre_accepte = historique.filter(status='acceptee', profil_souhaite='membre').exists()
+    # MODIFIÉ : On considère qu'il est "déjà membre" SEULEMENT s'il est RÉELLEMENT dans la liste.
+    # S'il a été retiré (est_reellement_membre = False), cette variable sera False, donc il pourra repostuler !
+    historique_membre = historique.filter(status='acceptee', profil_souhaite='membre').exists()
+    deja_membre_accepte = historique_membre and est_reellement_membre
 
     # ==============================================================================
 
@@ -150,18 +172,18 @@ def postuler(request, annonce_id):
 
         if form.is_valid():
             profil_choisi = form.cleaned_data.get('profil_souhaite')
-            cellule_choisie = form.cleaned_data.get('cellule') # On récupère la cellule choisie
+            cellule_choisie = form.cleaned_data.get('cellule') 
 
             # ==================================================================
             # NOUVELLE RÈGLE : MEMBRE = CELLULE OBLIGATOIRE
             # ==================================================================
             if profil_choisi == 'membre' and not cellule_choisie:
                 messages.error(request, "Erreur : Pour postuler en tant que Membre, vous devez OBLIGATOIREMENT choisir une cellule.")
-                # On réaffiche le formulaire avec l'erreur sans sauvegarder
                 return render(request, 'recrutement/postuler.html', {'form': form, 'annonce': annonce})
             # ==================================================================
             
             # --- VERIFICATION PROMOTION INTERNE ---
+            # Si je suis déjà membre ACTIF, je ne peux pas redemander à être membre
             if deja_membre_accepte and profil_choisi == 'membre':
                 messages.error(request, "Vous êtes déjà Membre accepté. Pour repostuler, vous devez viser un poste supérieur (Chef de cellule ou Président).")
                 return render(request, 'recrutement/postuler.html', {'form': form, 'annonce': annonce})
@@ -176,8 +198,8 @@ def postuler(request, annonce_id):
                     messages.error(request, "Interdit : Un Chef de cellule ne peut pas devenir Président sans démissionner.")
                     return redirect('home')
                 
-                est_membre = club_concerne.membres.filter(pk=request.user.pk).exists()
-                if not est_membre and profil_choisi in ['chef_cellule', 'president']:
+                # MODIFIÉ : On utilise la variable calculée au début (est_reellement_membre)
+                if not est_reellement_membre and profil_choisi in ['chef_cellule', 'president']:
                     messages.error(request, "Refusé : Vous devez d'abord être Membre pour prétendre à ce poste.")
                     return redirect('home')
 

@@ -12,10 +12,10 @@
         .role-card { border-radius: 16px; padding: 25px; margin-bottom: 50px; background: #fff; box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
         .role-title { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 20px; font-size: 1.3rem; }
         
-        /* Couleurs des rôles */
         .role-president { color: #6f42c1; border-bottom: 3px solid #6f42c1; padding-bottom: 10px; display: inline-block; }
         .role-chef { color: #0d6efd; border-bottom: 3px solid #0d6efd; padding-bottom: 10px; display: inline-block; }
         .role-membre { color: #198754; border-bottom: 3px solid #198754; padding-bottom: 10px; display: inline-block; }
+        .role-nouveau { color: #6c757d; border-bottom: 3px solid #6c757d; padding-bottom: 10px; display: inline-block; }
 
         .table-custom { border-radius: 12px; overflow: hidden; background-color: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
         .table-custom th { text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; padding: 15px; }
@@ -63,7 +63,6 @@
 
     <div class="role-card">
         <div class="role-title"><i class="bi bi-award-fill role-president"></i> <span class="text-dark">Présidents</span></div>
-        
         {% if clubs_presidents or events_presidents %}
         <div class="table-responsive">
             <table class="table table-custom align-middle">
@@ -71,9 +70,11 @@
                     <tr>
                         <th>Prénom</th>
                         <th>Nom</th>
+                        <th>Username</th>
                         <th>Email</th>
-                        <th>Entité (Club / Event)</th>
-                        <th class="text-center" style="min-width: 350px;">Action</th>
+                        <th>CNE</th>
+                        <th>Filière</th> <th>Entité</th>
+                        <th class="text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -81,30 +82,29 @@
                     <tr>
                         <td class="fw-bold">{{ club.president.first_name }}</td>
                         <td class="fw-bold">{{ club.president.last_name }}</td>
+                        <td>{{ club.president.username }}</td>
                         <td>{{ club.president.email }}</td>
-                        <td>
-                            <span class="badge badge-club me-2">Club</span> {{ club.nom }}
-                        </td>
+                        <td>{{ club.president.profil.cne|default:"-" }}</td>
+                        <td>{{ club.president.profil.filiere|default:"-" }}</td> <td><span class="badge badge-club me-2">Club</span> {{ club.nom }}</td>
                         <td class="text-center">
                             <a href="{% url 'modifier_utilisateur' club.president.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil-square"></i> Modifier</a>
-                            <a href="{% url 'desactiver_utilisateur' club.president.id 'retrograder' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Rétrograder ce Président ?');"><i class="bi bi-person-dash"></i> Retirer poste</a>
-                            <a href="{% url 'supprimer_utilisateur' club.president.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ce compte ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
+                            <a href="{% url 'desactiver_utilisateur' club.president.id 'retrograder' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Rétrograder ?');"><i class="bi bi-person-dash"></i> Retirer</a>
+                            <a href="{% url 'supprimer_utilisateur' club.president.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
                         </td>
                     </tr>
                     {% endfor %}
-
                     {% for event in events_presidents %}
                     <tr>
                         <td class="fw-bold">{{ event.president.first_name }}</td>
                         <td class="fw-bold">{{ event.president.last_name }}</td>
+                        <td>{{ event.president.username }}</td>
                         <td>{{ event.president.email }}</td>
-                        <td>
-                            <span class="badge badge-event me-2">Event</span> {{ event.titre }}
-                        </td>
+                        <td>{{ event.president.profil.cne|default:"-" }}</td>
+                        <td>{{ event.president.profil.filiere|default:"-" }}</td> <td><span class="badge badge-event me-2">Event</span> {{ event.titre }}</td>
                         <td class="text-center">
                             <a href="{% url 'modifier_utilisateur' event.president.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil-square"></i> Modifier</a>
-                            <a href="{% url 'desactiver_utilisateur' event.president.id 'retrograder' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Rétrograder ce Président ?');"><i class="bi bi-person-dash"></i> Retirer poste</a>
-                            <a href="{% url 'supprimer_utilisateur' event.president.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ce compte ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
+                            <a href="{% url 'desactiver_utilisateur' event.president.id 'retrograder' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Rétrograder ?');"><i class="bi bi-person-dash"></i> Retirer</a>
+                            <a href="{% url 'supprimer_utilisateur' event.president.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -112,14 +112,12 @@
             </table>
         </div>
         {% else %}
-            <div class="alert alert-light text-center">Aucun président actif pour le moment.</div>
+            <div class="alert alert-light text-center">Aucun président actif.</div>
         {% endif %}
     </div>
 
-
     <div class="role-card">
         <div class="role-title"><i class="bi bi-diagram-3-fill role-chef"></i> <span class="text-dark">Chefs de cellule</span></div>
-
         {% if chefs_cellules %}
         <div class="table-responsive">
             <table class="table table-custom align-middle">
@@ -127,10 +125,12 @@
                     <tr>
                         <th>Prénom</th>
                         <th>Nom</th>
+                        <th>Username</th>
                         <th>Email</th>
-                        <th>Contexte</th>
-                        <th>Cellule dirigée</th>
-                        <th class="text-center" style="min-width: 350px;">Action</th>
+                        <th>CNE</th>
+                        <th>Filière</th> <th>Contexte</th>
+                        <th>Cellule</th>
+                        <th class="text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -138,21 +138,19 @@
                     <tr>
                         <td>{{ cellule.chef.first_name }}</td>
                         <td>{{ cellule.chef.last_name }}</td>
+                        <td>{{ cellule.chef.username }}</td>
                         <td>{{ cellule.chef.email }}</td>
-                        <td>
-                            {% if cellule.club %}
-                                <span class="badge badge-club">Club : {{ cellule.club.nom }}</span>
-                            {% elif cellule.event %}
-                                <span class="badge badge-event">Event : {{ cellule.event.titre }}</span>
-                            {% else %}
-                                <span class="badge bg-secondary">-</span>
-                            {% endif %}
+                        <td>{{ cellule.chef.profil.cne|default:"-" }}</td>
+                        <td>{{ cellule.chef.profil.filiere|default:"-" }}</td> <td>
+                            {% if cellule.club %}<span class="badge badge-club">Club : {{ cellule.club.nom }}</span>
+                            {% elif cellule.event %}<span class="badge badge-event">Event : {{ cellule.event.titre }}</span>
+                            {% else %}-{% endif %}
                         </td>
                         <td class="fw-bold text-primary">{{ cellule.nom }}</td>
                         <td class="text-center">
                             <a href="{% url 'modifier_utilisateur' cellule.chef.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil"></i> Modifier</a>
-                            <a href="{% url 'desactiver_utilisateur' cellule.chef.id 'retrograder' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Rétrograder ce Chef ?');"><i class="bi bi-person-dash"></i> Retirer poste</a>
-                            <a href="{% url 'supprimer_utilisateur' cellule.chef.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ce compte ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
+                            <a href="{% url 'desactiver_utilisateur' cellule.chef.id 'retrograder' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Rétrograder ?');"><i class="bi bi-person-dash"></i> Retirer</a>
+                            <a href="{% url 'supprimer_utilisateur' cellule.chef.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
                         </td>
                     </tr>
                 {% endfor %}
@@ -164,15 +162,14 @@
         {% endif %}
     </div>
 
-
     <div class="role-card">
         <div class="role-title"><i class="bi bi-people-fill role-membre"></i> <span class="text-dark">Membres</span></div>
-
+        
         {% for club in clubs_list %}
             {% if club.membres.all %}
                 <div class="mb-4">
                     <h5 class="mt-3 mb-3 text-secondary border-bottom pb-2">
-                        <i class="bi bi-building"></i> Membres du Club : <strong class="text-dark">{{ club.nom }}</strong>
+                        <i class="bi bi-building"></i> Club : <strong>{{ club.nom }}</strong>
                     </h5>
                     <div class="table-responsive">
                         <table class="table table-custom align-middle">
@@ -180,24 +177,34 @@
                                 <tr>
                                     <th>Prénom</th>
                                     <th>Nom</th>
+                                    <th>Username</th>
                                     <th>Email</th>
-                                    <th>Statut</th>
-                                    <th class="text-center" style="min-width: 350px;">Action</th>
+                                    <th>CNE</th>
+                                    <th>Filière</th> 
+                                    <th>Cellule</th>
+                                    <th class="text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                            {% for membre in club.membres.all %}
-                                <tr>
-                                    <td>{{ membre.first_name }}</td>
-                                    <td>{{ membre.last_name }}</td>
-                                    <td>{{ membre.email }}</td>
-                                    <td><span class="badge bg-light text-dark border">Membre</span></td>
-                                    <td class="text-center">
-                                        <a href="{% url 'modifier_utilisateur' membre.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil"></i> Modifier</a>
-                                        <a href="{% url 'desactiver_utilisateur' membre.id 'exclure' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Exclure ce membre ?');"><i class="bi bi-person-x"></i> Exclure</a>
-                                        <a href="{% url 'supprimer_utilisateur' membre.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
-                                    </td>
-                                </tr>
+                            {% for cellule in club.cellules.all %}
+                                {% for membre in cellule.membres.all %}
+                                    <tr>
+                                        <td>{{ membre.first_name }}</td>
+                                        <td>{{ membre.last_name }}</td>
+                                        <td>{{ membre.username }}</td>
+                                        <td>{{ membre.email }}</td>
+                                        <td>{{ membre.profil.cne|default:"-" }}</td>
+                                        <td>{{ membre.profil.filiere|default:"-" }}</td> 
+                                        
+                                        <td class="fw-bold text-success">{{ cellule.nom }}</td>
+                                        
+                                        <td class="text-center">
+                                            <a href="{% url 'modifier_utilisateur' membre.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil"></i> Modifier</a>
+                                            <a href="{% url 'desactiver_utilisateur' membre.id 'exclure' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Exclure ce membre ?');"><i class="bi bi-person-x"></i> Exclure</a>
+                                            <a href="{% url 'supprimer_utilisateur' membre.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
                             {% endfor %}
                             </tbody>
                         </table>
@@ -212,18 +219,18 @@
                 {%  for cellule in cellules %}
                     {% if cellule.membres.all %}
                         <div class="mb-4">
-                            <h5 class="mt-3 mb-3 text-info border-bottom pb-2">
-                                <i class="bi bi-calendar-event"></i> Membres de l'Event : <strong class="text-dark">{{ event.titre }}</strong> <small class="text-muted">({{ cellule.nom }})</small>
-                            </h5>
+                            <h5 class="mt-3 mb-3 text-info border-bottom pb-2"><i class="bi bi-calendar-event"></i> Event : <strong>{{ event.titre }}</strong> <small>({{ cellule.nom }})</small></h5>
                             <div class="table-responsive">
                                 <table class="table table-custom align-middle">
                                     <thead class="bg-info text-white">
                                         <tr>
                                             <th>Prénom</th>
                                             <th>Nom</th>
+                                            <th>Username</th>
                                             <th>Email</th>
-                                            <th>Cellule</th>
-                                            <th class="text-center" style="min-width: 350px;">Action</th>
+                                            <th>CNE</th>
+                                            <th>Filière</th> <th>Cellule</th>
+                                            <th class="text-center">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -231,12 +238,14 @@
                                         <tr>
                                             <td>{{ membre.first_name }}</td>
                                             <td>{{ membre.last_name }}</td>
+                                            <td>{{ membre.username }}</td>
                                             <td>{{ membre.email }}</td>
-                                            <td class="fw-bold">{{ cellule.nom }}</td>
+                                            <td>{{ membre.profil.cne|default:"-" }}</td>
+                                            <td>{{ membre.profil.filiere|default:"-" }}</td> <td class="fw-bold">{{ cellule.nom }}</td>
                                             <td class="text-center">
                                                 <a href="{% url 'modifier_utilisateur' membre.id %}" class="btn btn-light border btn-action text-dark"><i class="bi bi-pencil"></i> Modifier</a>
-                                                <a href="{% url 'desactiver_utilisateur' membre.id 'exclure' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Exclure ce membre ?');"><i class="bi bi-person-x"></i> Exclure</a>
-                                                <a href="{% url 'supprimer_utilisateur' membre.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer définitivement ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
+                                                <a href="{% url 'desactiver_utilisateur' membre.id 'exclure' %}" class="btn btn-warning btn-action text-dark" onclick="return confirm('Exclure ?');"><i class="bi bi-person-x"></i> Exclure</a>
+                                                <a href="{% url 'supprimer_utilisateur' membre.id %}" class="btn btn-dark btn-action" onclick="return confirm('Supprimer ?');"><i class="bi bi-trash-fill"></i> Supprimer</a>
                                             </td>
                                         </tr>
                                     {% endfor %}
@@ -249,9 +258,64 @@
             {% endif %}
             {% endwith %}
         {% endfor %}
-        
-        {% if not clubs_list and not events_list %}
-             <div class="alert alert-light text-center">Aucun membre enregistré.</div>
+    </div>
+
+    <div class="role-card">
+        <div class="role-title">
+            <i class="bi bi-person-plus-fill role-nouveau"></i> 
+            <span class="text-dark">Nouveaux inscrits / Sans affectation</span>
+        </div>
+
+        {% if users_sans_role %}
+        <div class="table-responsive mt-3">
+            <table class="table table-custom align-middle">
+                <thead class="bg-secondary text-white">
+                    <tr>
+                        <th>Prénom</th>
+                        <th>Nom</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>CNE</th>
+                        <th>Filière</th> <th>Date d'inscription</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for u in users_sans_role %}
+                    <tr>
+                        <td class="fw-bold">{{ u.first_name }}</td>
+                        <td class="fw-bold">{{ u.last_name }}</td>
+                        <td class="fw-bold">{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>
+                            {% if u.profil.cne %}
+                                {{ u.profil.cne }}
+                            {% else %}
+                                <span class="badge bg-light text-dark">Non renseigné</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.profil.filiere %}
+                                {{ u.profil.filiere }}
+                            {% else %}
+                                <span class="badge bg-light text-dark">Non renseigné</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ u.date_joined|date:"d M Y" }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'supprimer_utilisateur' u.id %}" class="btn btn-dark btn-action" onclick="return confirm('Voulez-vous vraiment supprimer ce compte utilisateur ?');">
+                                <i class="bi bi-trash-fill"></i> Supprimer
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div class="alert alert-light text-center mt-3 text-muted">
+                Aucun nouvel inscrit en attente. Tout le monde a un rôle !
+            </div>
         {% endif %}
     </div>
 
