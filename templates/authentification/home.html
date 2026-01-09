@@ -292,6 +292,57 @@
             </div>
         </section>
 
+        <div class="container mt-5 mb-5">
+            <h2 class="text-center mb-4 text-uppercase fw-bold">🏆 Top Performance : Les Meilleurs Événements</h2>
+            
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body p-0">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th scope="col" class="ps-4">Rang</th>
+                                        <th scope="col">Événement</th>
+                                        <th scope="col">Club Organisateur</th>
+                                        <th scope="col">Date</th>
+                                        <th scope="col" class="text-center">Note Jury</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for event in top_events %}
+                                    <tr>
+                                        <td class="ps-4 fw-bold">
+                                            {% if forloop.counter == 1 %}🥇 1er{% endif %}
+                                            {% if forloop.counter == 2 %}🥈 2ème{% endif %}
+                                            {% if forloop.counter == 3 %}🥉 3ème{% endif %}
+                                            {% if forloop.counter > 3 %}#{{ forloop.counter }}{% endif %}
+                                        </td>
+                                        <td class="fw-bold text-primary">{{ event.titre }}</td>
+                                        <td>
+                                            {% if event.club %}{{ event.club.nom }}{% else %}-{% endif %}
+                                        </td>
+                                        <td>{{ event.date|date:"d M Y" }}</td>
+                                        <td class="text-center">
+                                            <span class="badge rounded-pill bg-success fs-6">
+                                                {{ event.note_admin }}/20
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            <em>Le classement n'est pas encore disponible.</em>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <section class="page-section bg-light" id="portfolio">
             <div class="container">
                 <div class="text-center">

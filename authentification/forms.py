@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import Profil
 from django.core.exceptions import ValidationError 
 from django.core.validators import RegexValidator  # Ajout pour la validation du format
+from clubs.models import Event
 
 # ==========================================
 # 1. FORMULAIRE D'INSCRIPTION (USER + PROFIL)
@@ -99,4 +100,14 @@ class UserEditForm(forms.ModelForm):
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'username': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+
+class EventNoteForm(forms.ModelForm):
+    class Meta:
+        model = Event
+        fields = ['budget', 'note_admin']  # <--- On a ajouté 'budget' ici
+        widgets = {
+            'budget': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Ex: 5000'}),
+            'note_admin': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 20, 'placeholder': 'Note sur 20'}),
         }

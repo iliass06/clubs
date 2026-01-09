@@ -25,7 +25,6 @@ class Annonce(models.Model):
     def __str__(self):
         return self.titre
 
-
 class Candidature(models.Model):
     STATUS = [('en_attente','En attente'), ('acceptee','Acceptée'), ('refusee','Refusée')]
     annonce = models.ForeignKey(Annonce, on_delete=models.CASCADE, related_name='candidatures')
@@ -47,7 +46,6 @@ class Candidature(models.Model):
 
     def __str__(self):
         return f"{self.username} → {self.profil_souhaite} ({self.annonce.titre})"
-
 
 
 class Membership(models.Model):

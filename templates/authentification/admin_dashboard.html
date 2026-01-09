@@ -17,80 +17,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
-        body {
-            background-color: #f8f9fa;
-        }
-
-        /* Navbar custom */
+        body { background-color: #f8f9fa; }
+        
+        /* Navbar */
         .navbar-custom {
             background: linear-gradient(90deg, #1e293b, #020617);
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        .navbar-custom .navbar-brand {
-            font-weight: 700;
-            color: #ffc800 !important;
-        }
-        .navbar-custom .nav-link {
-            color: #ffffff !important;
-        }
-        .navbar-custom .nav-link.active {
-            font-weight: 600;
-            text-decoration: underline;
-        }
-        .navbar-custom .btn-outline-warning {
-            border-radius: 10px;
-            font-weight: 500;
-        }
-        .navbar-custom .btn-outline-warning:hover {
-            background-color: #ffc800;
-            color: #020617;
-        }
+        .navbar-custom .navbar-brand { font-weight: 700; color: #ffc800 !important; }
+        .navbar-custom .nav-link { color: #ffffff !important; }
+        .navbar-custom .btn-outline-warning { border-radius: 10px; font-weight: 500; }
+        .navbar-custom .btn-outline-warning:hover { background-color: #ffc800; color: #020617; }
 
-        /* Message "Bonjour ..." */
-        .welcome-text {
-            font-size: 1.7rem;
-            font-weight: 600;
-            margin-bottom: 2rem;
-        }
-
-        /* Boutons principaux */
+        .welcome-text { font-size: 1.7rem; font-weight: 600; margin-bottom: 2rem; }
+        
+        /* Boutons */
         .main-btns .btn {
-            margin: 0.5rem;
-            font-size: 1.1rem;
-            font-weight: 500;
-            background-color: #ffc800;
-            color: #212529;
-            border: none;
+            margin: 0.5rem; font-size: 1.1rem; font-weight: 500;
+            background-color: #ffc800; color: #212529; border: none;
         }
-        .main-btns .btn:hover {
-            background-color: #e6b800;
-            color: #212529;
-        }
+        .main-btns .btn:hover { background-color: #e6b800; color: #212529; }
 
-        /* Cards annonces */
-        .circle-image img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 50%;
-            margin: 0 auto;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-            transition: 0.3s;
-        }
-        .section-heading {
-            font-size: 1.8rem;
-            font-weight: 700;
-        }
-        .section-subheading {
-            font-size: 1rem;
-            color: #6c757d;
-        }
+        /* Cards */
+        .circle-image img { width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin: 0 auto; }
+        .card:hover { transform: translateY(-5px); transition: 0.3s; }
+        .section-heading { font-size: 1.8rem; font-weight: 700; }
+        .section-subheading { font-size: 1rem; color: #6c757d; }
     </style>
 </head>
 <body>
@@ -102,16 +59,12 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarAdmin">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"></li>
-            </ul>
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0"></ul>
             <div class="d-flex align-items-center">
                 <span class="navbar-text me-3 text-white">
                     {{ user.first_name }} {{ user.last_name }}
                 </span>
-                <a href="{% url 'signout' %}" class="btn btn-outline-warning ms-2">
-                    Se déconnecter
-                </a>
+                <a href="{% url 'signout' %}" class="btn btn-outline-warning ms-2">Se déconnecter</a>
             </div>
         </div>
     </div>
@@ -127,6 +80,92 @@
         <a href="{% url 'gestion_utilisateurs' %}" class="btn btn-lg">Gestion Utilisateurs</a>
     </div>
 
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-dark text-white">
+            <i class="fas fa-trophy me-2 text-warning"></i> Classement par Performance
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Rang</th>
+                        <th>Événement</th>
+                        <th>Club</th>
+                        <th>Budget</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in events_tries %}
+                    <tr>
+                        <td><strong>#{{ forloop.counter }}</strong></td>
+                        <td class="fw-bold">{{ event.titre }}</td>
+                        <td>{{ event.club.nom }}</td>
+                        <td>{{ event.budget }} DH</td>
+                        <td>
+                            {% if event.note_admin >= 16 %}
+                                <span class="badge bg-success">{{ event.note_admin }}/20</span>
+                            {% elif event.note_admin >= 10 %}
+                                <span class="badge bg-warning text-dark">{{ event.note_admin }}/20</span>
+                            {% else %}
+                                <span class="badge bg-danger">{{ event.note_admin }}/20</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center py-4">Aucun événement noté pour le moment.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card shadow mb-5">
+        <div class="card-header bg-warning text-dark fw-bold">
+            <i class="fas fa-edit me-2"></i> Gestion : Note & Budget
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Événement</th>
+                            <th>Club</th>
+                            <th>Budget Actuel</th>
+                            <th>Note Actuelle</th>
+                            <th class="text-end pe-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in all_events %}
+                        <tr>
+                            <td class="ps-3"><strong>{{ event.titre }}</strong></td>
+                            <td>{{ event.club.nom }}</td>
+                            
+                            <td class="text-primary fw-bold">
+                                {% if event.budget %}{{ event.budget }} DH{% else %}-{% endif %}
+                            </td>
+
+                            <td>
+                                {% if event.note_admin %}
+                                    <span class="badge bg-info text-dark">{{ event.note_admin }}/20</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Non noté</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-3">
+                                <button type="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalNote{{ event.id }}">
+                                    <i class="fas fa-pen me-1"></i> Gérer
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <section class="page-section" id="admin-annonces">
         <div class="container">
             <div class="text-center mb-4">
@@ -138,17 +177,13 @@
                 {% for annonce in annonces %}
                 <div class="col-md-4 mb-4">
                     <div class="card h-100 shadow-sm position-relative">
-
                         <div class="position-absolute top-0 end-0 m-2 d-flex gap-2" style="z-index: 10;">
-                            
-                            <a href="{% url 'modifier_annonce' annonce.id %}" class="btn btn-warning btn-sm text-dark" title="Modifier l'annonce">
+                            <a href="{% url 'modifier_annonce' annonce.id %}" class="btn btn-warning btn-sm text-dark" title="Modifier">
                                 <i class="bi bi-pencil-fill"></i>
                             </a>
-
                             <form method="post" action="{% url 'delete_annonce' annonce.id %}" class="m-0">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-danger btn-sm"
-                                        onclick="return confirm('Voulez-vous vraiment supprimer cette annonce ?');" title="Supprimer l'annonce">
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Supprimer ?');">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
@@ -156,7 +191,6 @@
                         <div class="circle-image mt-3">
                             <img src="{% static 'assets/img/new.png' %}" alt="{{ annonce.titre }}">
                         </div>
-
                         <div class="card-body">
                             <h4 class="card-title my-3">
                                 <a href="{% url 'admin_candidatures' annonce.id %}" class="btn btn-outline-primary w-100">
@@ -164,31 +198,15 @@
                                 </a>
                             </h4>
                             <p class="card-text text-muted">{{ annonce.description }}</p>
-                            <p class="card-text text-muted">
+                            <p class="card-text text-muted small">
                                 <strong>Du :</strong> {{ annonce.start_date }} <br>
                                 <strong>Au :</strong> {{ annonce.end_date }}
                             </p>
-                            
-                            <p class="card-text text-muted">
-                                <strong>Club :</strong> 
-                                {% if annonce.club %} 
-                                    {{ annonce.club.nom }} 
-                                {% elif annonce.event and annonce.event.club %}
-                                    {{ annonce.event.club.nom }}
-                                {% else %}
-                                    -
-                                {% endif %}
-                                <br>
-                                <strong>Event :</strong> {% if annonce.event %} {{ annonce.event.titre }} {% else %}-{% endif %}
-                            </p>
-                            
                         </div>
                     </div>
                 </div>
                 {% empty %}
-                <div class="col-12">
-                    <p class="text-muted">Aucune annonce pour le moment.</p>
-                </div>
+                <div class="col-12"><p class="text-muted">Aucune annonce.</p></div>
                 {% endfor %}
             </div>
         </div>
@@ -196,6 +214,42 @@
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% for event in all_events %}
+<div class="modal fade" id="modalNote{{ event.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'noter_event' event.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Gérer : {{ event.titre }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Budget Alloué (DH)</label>
+                        <input type="number" step="0.01" name="budget" class="form-control" 
+                               value="{{ event.budget|stringformat:'.2f' }}" placeholder="Ex: 5000">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Note du Jury (/20)</label>
+                        <input type="number" min="0" max="20" name="note_admin" class="form-control" 
+                               value="{{ event.note_admin|default:'' }}" placeholder="Ex: 15">
+                        <div class="form-text">Donnez une note pour le classement des meilleurs événements.</div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

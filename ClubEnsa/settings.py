@@ -28,7 +28,6 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     "authentification.apps.AuthentificationConfig",
     "clubs.apps.ClubsConfig",
-    "notifications.apps.NotificationsConfig",
     "recrutement.apps.RecrutementConfig",
     "django.contrib.admin",
     "django.contrib.auth",

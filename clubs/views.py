@@ -32,9 +32,9 @@ def gestion_club_event(request):
     })
 
 
-
-# ---------- CRUD Club ----------
-from django.contrib import messages  # Assure-toi d'avoir cet import en haut
+# =========================================================
+# PARTIE CRUD : CLUBS (INCHANGÉE)
+# =========================================================
 
 def club_create(request):
     if request.method == 'POST':
@@ -44,14 +44,12 @@ def club_create(request):
         if form.is_valid() and formset.is_valid():
             
             # --- VALIDATION : AU MOINS UNE CELLULE ---
-            # On parcourt les formulaires pour voir s'il y en a au moins un rempli et non supprimé
             has_cellule = any(
                 f.cleaned_data and not f.cleaned_data.get('DELETE', False) 
                 for f in formset
             )
 
             if not has_cellule:
-                # ERREUR : Aucune cellule trouvée
                 messages.error(request, "Erreur : Vous devez ajouter au moins une cellule pour créer ce club.")
                 return render(request, 'clubs/club_form.html', {
                     'form': form,
@@ -75,9 +73,6 @@ def club_create(request):
         'form': form,
         'formset': formset
     })
-
-
-
 
 
 def club_update(request, pk):
@@ -118,8 +113,11 @@ def club_delete(request, pk):
         return redirect('gestion_club_event')
     return render(request, 'clubs/confirm_delete.html', {'object': club, 'type': 'Club'})
 
-# ---------- CRUD Event ----------
-# Assure-toi d'avoir cet import en haut du fichier
+
+# =========================================================
+# PARTIE CRUD : ÉVÉNEMENTS (INCHANGÉE)
+# =========================================================
+
 def event_create(request):
     # On définit le formset
     EventCelluleFormSet = inlineformset_factory(
@@ -139,7 +137,6 @@ def event_create(request):
             )
 
             if not has_cellule:
-                # ERREUR : Aucune cellule trouvée
                 messages.error(request, "Erreur : Vous devez ajouter au moins une cellule pour créer cet événement.")
                 return render(request, 'clubs/event_form.html', {
                     'form': form,
@@ -165,6 +162,7 @@ def event_create(request):
         'formset': formset
     })
 
+
 def event_update(request, pk):
     event = get_object_or_404(Event, pk=pk)
 
@@ -184,7 +182,6 @@ def event_update(request, pk):
             event_saved = form.save()
             
             # 1. D'abord on appelle save(commit=False). 
-            # C'est CETTE ligne qui remplit la liste 'deleted_objects'.
             cellules = formset.save(commit=False)
 
             # 2. Maintenant que la liste existe, on supprime manuellement les éléments cochés
@@ -194,7 +191,6 @@ def event_update(request, pk):
             # 3. Ensuite, on sauvegarde les cellules restantes (nouvelles ou modifiées)
             for cellule in cellules:
                 cellule.event = event_saved
-                # Note : On ne lie PLUS la cellule au club ici (Indépendance stricte)
                 cellule.save()
             
             return redirect('gestion_club_event')
@@ -209,6 +205,7 @@ def event_update(request, pk):
         'formset': formset,
         'readonly_cellules': False
     })
+
 
 def event_delete(request, pk):
     event = get_object_or_404(Event, pk=pk)
