@@ -87,7 +87,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.mysql",
         "NAME": 'ensadb',
         'USER': 'root',
-        'PASSWORD': 'Elfadili13@2006',
+        'PASSWORD': '-',
         'HOST': 'localhost',
         'PORT': '3306',
     }
