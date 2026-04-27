@@ -1,15 +1,15 @@
 import os
 from pathlib import Path
 
-# Chemins de base
+# BASE_DIR pointe vers la racine du projet (là où se trouve manage.py)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Sécurité (Debug activé pour le test, mais sécurisé pour Vercel)
-SECRET_KEY = "django-insecure-test-key-dataverse-2026"
-DEBUG = True
+SECRET_KEY = "django-insecure-vercel-test-key"
+
+# IMPORTANT POUR LE TEST
+DEBUG = True 
 ALLOWED_HOSTS = ['*']
 
-# Définition des applications
 INSTALLED_APPS = [
     "authentification.apps.AuthentificationConfig",
     "clubs.apps.ClubsConfig",
@@ -25,7 +25,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware", # Pour gérer les fichiers statiques sur Vercel
+    "whitenoise.middleware.WhiteNoiseMiddleware", # Doit être ici
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -43,6 +43,7 @@ TEMPLATES = [
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
@@ -53,7 +54,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "ClubEnsa.wsgi.application"
 
-# Base de données simplifiée pour le test Vercel (SQLite)
+# Utilisation de SQLite pour éviter les erreurs MySQL sur Vercel
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -61,15 +62,14 @@ DATABASES = {
     }
 }
 
-# Fichiers Statiques (CSS, JS, Images)
-STATIC_URL = "static/"
+# --- CONFIGURATION STATIQUE (CRITIQUE) ---
+STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-# Configuration WhiteNoise pour optimiser le stockage
+# Indispensable pour Vercel/WhiteNoise
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Médias (Photos téléchargées)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
