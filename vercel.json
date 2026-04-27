@@ -1,14 +1,14 @@
 {
   "builds": [
     {
-      "src": "clubs/wsgi.py",
+      "src": "ClubEnsa/wsgi.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "clubs/wsgi.py"
+      "dest": "ClubEnsa/wsgi.py"
     }
   ]
 }
